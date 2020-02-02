@@ -1,6 +1,11 @@
 #' Update a workflowr project
 #'
-#' Update an existing workflowr project to workflowr 1.0.
+#' Update an existing workflowr project to workflowr 1.0. If you have an
+#' existing project built with a beta version of workflowr (pre-1.0.0), you can
+#' use \code{wflow_update} to obtain the latest features. However, if you like
+#' your current project the way it is, you can continue to use workflowr as you
+#' have been by getting the latest bug fixes from
+#' \href{https://jdblischak.github.io/workflowrBeta/}{workflowrBeta}.
 #'
 #' By default, \code{wflow_update} is run in \code{dry_run} mode so that no
 #' unwanted changes are made. Here's how to update an existing project to
@@ -49,7 +54,7 @@
 #' @examples
 #' \dontrun{
 #'
-#' # Preview the files to be udpated
+#' # Preview the files to be updated
 #' wflow_update()
 #' # Update the files
 #' wflow_update(dry_run = FALSE)
@@ -60,13 +65,9 @@ wflow_update <- function(dry_run = TRUE, project = ".") {
 
   # Check input arguments ------------------------------------------------------
 
-  if (!(is.logical(dry_run) && length(dry_run) == 1))
-    stop("dry_run must be a one element logical vector. You entered: ", dry_run)
-  if (!(is.character(project) && length(project) == 1))
-    stop("project must be a one element character vector. You entered: ", project)
-  if (!fs::dir_exists(project))
-    stop("project does not exist. You entered: ", project)
-
+  assert_is_flag(dry_run)
+  check_wd_exists()
+  assert_is_single_directory(project)
   project <- absolute(project)
 
   if (dry_run) {
@@ -177,7 +178,7 @@ wflow_update <- function(dry_run = TRUE, project = ".") {
   chunks <- file.path(p$analysis, "chunks.R")
   if (fs::file_exists(chunks)) {
     files_updated <- c(files_updated, chunks)
-    if (!dry_run) fs::file_delete(chunks)
+    if (!dry_run) wflow_delete(chunks)
   }
 
   # Output ---------------------------------------------------------------------

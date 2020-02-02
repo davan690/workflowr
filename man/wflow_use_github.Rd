@@ -4,22 +4,54 @@
 \alias{wflow_use_github}
 \title{Deploy site with GitHub}
 \usage{
-wflow_use_github(username = NULL, repository = NULL,
-  navbar_link = TRUE, protocol = "https", domain = "github.com",
-  project = ".")
+wflow_use_github(
+  username = NULL,
+  repository = NULL,
+  organization = NULL,
+  navbar_link = TRUE,
+  create_on_github = NULL,
+  protocol = "https",
+  domain = "github.com",
+  project = "."
+)
 }
 \arguments{
-\item{username}{character (default: NULL). The GitHub username for the remote
-repository. If not specified, workflowr will attempt to guess this from the
-current remote named "origin" if it had previously been configured.}
+\item{username}{character (default: NULL). The GitHub account associated with
+the GitHub repository. This should be your personal GitHub username. If the
+repository will be created for a GitHub organization, instead use the
+argument \code{organization}. It will be
+combined with the arguments \code{repository} and \code{domain} to
+determine the URL of the new repository, e.g. the default is
+https://github.com/username/repository. It will be combined with the
+arguments \code{repository}, \code{domain}, and \code{protocol} to
+determine the URL for Git to use to push and pull from GitHub, e.g. the
+default is https://github.com/username/repository.git. If \code{username}
+is not specified, \code{wflow_use_github} will first attempt to guess it
+from the current setting for the remote URL named "origin". If you haven't
+previously configured a remote for this workflowr project (or you are
+unsure what that means), then you should specify your GitHub username when
+calling this function.}
 
 \item{repository}{character (default: NULL). The name of the remote
-repository on GitHub. If not specified, workflowr will attempt to guess
-this from the current remote named "origin" if it had previously been
-configured.}
+repository on GitHub. If not specified, workflowr will guess the name of
+the repository. First, it will check the current setting for the remote URL
+named "origin". Second, it will use the name of the root directory of the
+workflowr project.}
+
+\item{organization}{character (default: NULL). The GitHub organization
+associated with the GitHub repository. Only set one of \code{organization}
+or \code{username}. See the argument \code{username} above for more
+details.}
 
 \item{navbar_link}{logical (default: TRUE). Insert a link to the GitHub
 repository into the navigation bar.}
+
+\item{create_on_github}{logical (default: NULL). Should workflowr create the
+repository on GitHub? This requires logging into your GitHub account to
+authenticate workflowr to act on your behalf. The default behavior is to
+ask the user. Note that this only works for public repositories on
+github.com. If you want to create a private repository or are using GitHub
+Enterprise, you will need to manually create the repository.}
 
 \item{protocol}{character (default: "https"). The protocol for communicating
 with GitHub. Must be either "https" or "ssh".}
@@ -38,11 +70,12 @@ Invisibly returns a list of class \code{wflow_use_github}. This is
   this information.
 }
 \description{
-\code{wflow_use_github} automates all the local configuration necesary to
+\code{wflow_use_github} automates all the local configuration necessary to
 deploy your workflowr project with \href{https://pages.github.com/}{GitHub
-Pages}. However, you will need to manually login to your account and create
-the new repository on GitHub. The final step is to run \code{wflow_git_push}
-in the R console.
+Pages}. Optionally, it can also create the new repository on GitHub (only
+applies to public repositories hosted on github.com). Afterwards, you will
+need to run \code{wflow_git_push} in the R console (or \code{git push} in the
+terminal) to push the code to GitHub.
 }
 \details{
 \code{wflow_use_github} performs the following steps and then commits the
@@ -52,7 +85,8 @@ changes:
 
 \item Adds a link to the GitHub repository in the navigation bar
 
-\item Configures the Git remote settings to use GitHub
+\item Configures the Git remote settings to use GitHub (via
+\code{\link{wflow_git_remote}})
 
 \item (Only if necessary) Renames the website directory to \code{docs/}
 
@@ -61,15 +95,67 @@ changes:
 
 }
 
-For more details, read the documentation provided by
-\href{https://pages.github.com/}{GitHub Pages}.
+Furthermore, you have two options for creating the remote repository on GitHub.
+In an interactive R session, you will be prompted to choose one of the options
+below. To bypass the prompt, you can set the argument \code{create_on_github}.
+
+\itemize{
+
+\item 1. Have workflowr create the new repository on GitHub. If you accept, your
+browser will open for you to provide authorization. If you are not logged
+into GitHub, you will be prompted to login. Then you will be asked to give
+permission to the workflowr-oauth-app to create the new repository for you on
+your behalf. This will allow \code{wflow_use_github}, running on your own
+machine, to create your new repository. Once \code{wflow_use_github}
+finishes, workflowr can no longer access your GitHub account.
+
+\item 2. Create the remote repository yourself by going to
+\url{https://github.com/new} and entering the Repository name that matches
+the name of the directory of your workflowr project (if you used the argument
+\code{repository} to make it a different name, make sure to instead use that
+one).
+
 }
+
+Once the GitHub repository has been created either by \code{wflow_use_github}
+or yourself, run \code{wflow_git_push} in the R console (or \code{git push
+origin master} in the terminal) to push your code to GitHub.
+}
+\section{Troubleshooting}{
+
+
+The feature to automatically create the GitHub repository for you may fail
+since it involves using your web browser to authenticate with your GitHub
+account. If it fails for any reason, it'd probably be easier to manually
+login to GitHub and create the repository yourself
+(\href{https://help.github.com/articles/creating-a-new-repository/}{instructions from GitHub}).
+However, if you have time, please file an
+\href{https://github.com/jdblischak/workflowr/issues/new/choose}{Issue on
+GitHub} to report what happened, and importantly include which web browser
+you were using.
+
+We have observed the following problems before:
+
+\itemize{
+
+\item The green button to approve the authentication of the workflowr GitHub
+app to create the repository on your behalf is grayed out, and unable to be
+clicked. This is likely a JavaScript problem. Make sure you don't have
+JavaScript disabled in your web browser. Also, you can try using a different
+browser.
+
+}
+}
+
 \examples{
 \dontrun{
 
 wflow_use_github("your-username", "name-of-repository")
 # Login with GitHub account and create new repository
 wflow_git_push()
+
+# Create a repository for an organization  you belong to
+wflow_use_github(organization = "my-org")
 }
 
 }

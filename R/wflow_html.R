@@ -9,7 +9,7 @@
 #' reproducibility features (typically specified in a file named
 #' \code{_workflowr.yml}). \code{wflow_html} is intended to be used to generate
 #' webpages for a workflowr website, but it can also be used outside a workflowr
-#' project to implement reproducibilty features for single R Markdown documents.
+#' project to implement reproducibility features for single R Markdown documents.
 #'
 #' @section HTML formatting:
 #'
@@ -97,6 +97,11 @@
 #'   \code{_workflowr.yml} is especially helpful if multiple users are
 #'   collaborating on a project since it ensures that everyone generates the
 #'   same URLs.}
+#'
+#'   \item{suppress_report}{By default a workflowr report is inserted at the top
+#'   of every HTML file containing useful summaries of the reproducibility
+#'   features and links to past versions of the analysis. To suppress this
+#'   report, set \code{suppress_report} to \code{TRUE}}.
 #' }
 #'
 #' In the default workflowr setup, the file \code{_workflowr.yml} is located in
@@ -154,15 +159,22 @@
 #'
 wflow_html <- function(...) {
 
+  cache_hook_final <- get_cache_hook()
+
   knitr <- rmarkdown::knitr_options(opts_chunk = list(comment = NA,
                                                       fig.align = "center",
                                                       tidy = FALSE),
                                     knit_hooks = list(plot = plot_hook,
-                                                      chunk = cache_hook),
+                                                      chunk = cache_hook_final),
                                     opts_hooks = list(fig.path = hook_fig_path))
+
+  # Have to explicitly pass on keep_md to output_format()
+  opts <- list(...)
+  if (!is.null(opts$keep_md)) keep_md <- opts$keep_md else keep_md <- FALSE
 
   o <- rmarkdown::output_format(knitr = knitr,
                                 pandoc = pandoc_options(to = "html"),
+                                keep_md = keep_md,
                                 pre_knit = wflow_pre_knit,
                                 post_knit = wflow_post_knit,
                                 pre_processor = wflow_pre_processor,
@@ -258,6 +270,30 @@ cache_hook <- function(x, options) {
   return(x)
 }
 
+# Access the default chunk hook function from knitr because it isn't exported.
+knitr_hook_chunk <- function() {
+
+  knitr::render_markdown()
+  f <- knitr::knit_hooks$get("chunk")
+  knitr::knit_hooks$restore()
+
+  return(f)
+}
+
+# First run the chunk through knitr's default markdown chunk function
+get_cache_hook <- function() {
+
+  default_hook_chunk <- knitr_hook_chunk()
+  wflow_hook_chunk <- cache_hook
+
+  result <- function(x, options) {
+
+    x <- default_hook_chunk(x, options)
+    wflow_hook_chunk(x, options)
+  }
+  return(result)
+}
+
 # pre_knit function ------------------------------------------------------------
 
 #' pre_knit function for workflowr
@@ -336,7 +372,6 @@ wflow_pre_knit <- function(input, ...) {
   if (has_code && wflow_opts$sessioninfo != "") {
     sessioninfo <- glue::glue('
       <br>
-      <br>
       <p>
       <button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo"
         data-toggle="collapse" data-target="#workflowr-sessioninfo"
@@ -363,10 +398,13 @@ wflow_pre_knit <- function(input, ...) {
   }
 
   lines_out <- c(header_lines,
+                 "",
                  report,
                  "",
                  seed_chunk,
+                 "",
                  lines_in[(header_end + 1):length(lines_in)],
+                 "",
                  sessioninfo)
 
   writeLines(lines_out, tmpfile)
@@ -432,7 +470,6 @@ wflow_post_knit <- function(metadata, input_file, runtime, encoding, ...) {
 
 # pre_processor function -----------------------------------------------------
 
-
 #' pre_processor function for workflowr
 #'
 #' This is the \code{pre_processor} function that \code{\link{wflow_html}}
@@ -470,24 +507,45 @@ wflow_pre_processor <- function(metadata, input_file, runtime, knit_meta,
   fname_footer <- tempfile("footer", fileext = ".html")
   writeLines(includes$footer, con = fname_footer)
 
-  # Pandoc 2+ sends a warning if there is no title and uses the filename
-  # without the extension to set the pagetitle (this is the text that is
-  # displayed in the browser tab). Here I avoid this error by always
-  # explicitly setting the pagetitle argument. This is overkill, since it is
-  # only relevant when running pandoc 2+ with not title, but this is easier. I
-  # sent a more principled way to handle this to rmarkdown, and it will be
-  # available in the next release.
-  #
-  # https://github.com/rstudio/rmarkdown/pull/1355
-  if (is.null(metadata$title)) {
-    pagetitle <- input_file
-  } else {
-    pagetitle <- metadata$title
-  }
-
   # Pandoc args
   args <- c("--include-before-body", fname_header,
-            "--include-after-body", fname_footer,
-            "--metadata", paste0("pagetitle=", pagetitle))
+            "--include-after-body", fname_footer)
+
+  # Add pagetitle if missing title to avoid pandoc2 error
+  if (rmarkdown::pandoc_available("2.0")) {
+     args <- c(args, add_pagetitle(metadata, input_file))
+  }
+
   return(args)
+}
+
+# Add a pagetitle (if needed) to avoid pandoc2 warning about missing title
+add_pagetitle <- function(metadata, input_file) {
+  # Only add pagetitle if all the following conditions are met
+
+  # No title
+  if (!is.null(metadata$title)) return(character(0))
+
+  # No pagetitle
+  if (!is.null(metadata$pagetitle)) return(character(0))
+
+  # rmarkdown version that does not adds pagetitle
+  rmd_version <- utils::packageVersion("rmarkdown")
+  # rmarkdown handles this starting in version 1.10 and ending in version 1.18
+  # https://github.com/rstudio/rmarkdown/pull/1355
+  if (rmd_version >= as.numeric_version("1.10") &&
+      rmd_version <= as.numeric_version("1.17"))
+    return(character(0))
+
+  # No title/pagetitle defined with pandoc_args
+  if (is.list(metadata$output)) {
+      pandoc_args <- metadata$output$`workflowr::wflow_html`$pandoc_args
+  } else {
+    pandoc_args <- NULL
+  }
+  if (!is.null(pandoc_args) && any(stringr::str_detect(pandoc_args, "title")))
+    return(character(0))
+
+  pagetitle <- input_file
+  return(c("--metadata", paste0("pagetitle=", pagetitle)))
 }

@@ -383,7 +383,32 @@ test_that("wflow_build reports working and knit directories", {
 
 # Test error handling ----------------------------------------------------------
 
+test_that("wflow_build fails early for bad files", {
+  expect_error(wflow_build(character(), project = site_dir),
+               "vector with length 0")
+  expect_error(wflow_build(s$analysis, project = site_dir),
+               "files cannot include a path to a directory")
+  expect_error(wflow_build("", project = site_dir),
+               "Not all files exist. Check the paths to the files")
+  fs::file_create(file.path(s$analysis, "invalid.R"))
+  expect_error(wflow_build(file.path(s$analysis, "invalid.R"), project = site_dir),
+               "Only files with extension Rmd or rmd")
+})
+
+test_that("wflow_build throws error if given directory input", {
+  d <- file.path(site_dir, "toplevel")
+  fs::dir_create(d)
+  on.exit(unlink(d, recursive = TRUE, force = TRUE))
+  expect_error(wflow_build(d, project = site_dir),
+               "files cannot include a path to a directory")
+})
+
 test_that("wflow_build fails if file outside of analysis/", {
+
+  # If pandoc is *not* installed, the error message will be about this.
+  if(!rmarkdown::pandoc_available())
+    skip("skipped because pandoc is *not* installed")
+
   rmd_outside <- file.path(s$root, "outside.Rmd")
   fs::file_create(rmd_outside)
   # When passing one invalid file
@@ -394,22 +419,10 @@ test_that("wflow_build fails if file outside of analysis/", {
                "Only files in the analysis directory can be built with wflow_build.")
 })
 
-test_that("wflow_build fails early for bad files", {
-  expect_error(wflow_build(character(), project = site_dir),
-               "files must be NULL or a character vector of filenames")
-  expect_error(wflow_build(s$analysis, project = site_dir),
-               "files cannot include a path to a directory")
-  expect_error(wflow_build("", project = site_dir),
-               "Not all files exist. Check the paths to the files")
-  fs::file_create(file.path(s$analysis, "invalid.R"))
-  expect_error(wflow_build(file.path(s$analysis, "invalid.R"), project = site_dir),
-               "File extensions must be either Rmd or rmd.")
-})
+test_that("wflow_build throws error if pandoc is not installed", {
+  if(rmarkdown::pandoc_available())
+    skip("skipped because pandoc is installed")
 
-test_that("wflow_build throws error if given directory input", {
-  d <- file.path(site_dir, "toplevel")
-  fs::dir_create(d)
-  on.exit(unlink(d, recursive = TRUE, force = TRUE))
-  expect_error(wflow_build(d, project = site_dir),
-               "files cannot include a path to a directory")
+  expect_error(wflow_build(project = site_dir),
+               'Pandoc is not installed.')
 })

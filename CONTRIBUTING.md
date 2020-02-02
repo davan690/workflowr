@@ -4,31 +4,24 @@ Thanks for your interest in contributing to workflowr.
 Here are some guidelines to help make it easier to merge your Pull Request:
 
 * For potentially large changes, please open an Issue first to discuss
-* Please submit Pull Requests to the "dev" branch
 * Please follow the [Hadley style guide][style]
-* Run `devtools::test()` to run the tests
-* (Optional) Execute the file [document.R](document.R) to update the
-documentation
+* Please run the file [scripts/contribute.R](scripts/contribute.R) to check your changes
+* (Optional) Run `devtools::test()` to run the tests
+* (Optional) Add new test(s) in `tests/testthat/`
 
 If you're new to submitting Pull Requests, please read the section [Contribute
 to other projects][contribute] in the tutorial [A quick introduction to version
 control with Git and GitHub][git-tutorial].
 
-## Explanation of branches
-
-branch name   | purpose
-------------- | -------------
-master        | stable branch for end users
-dev           | development branch - submit Pull Requests here
-
 ## More about this repository
 
 For the most part, I try to follow the guidelines from [R packages][r-pkg] by
 [Hadley Wickham][hadley]. The unit tests are performed with [testthat][], the
-documentation is built with [roxygen2][], the online package documentation is
-created with [pkgdown][], continuous integration testing is performed for Linux
-and macOS by [Travis CI][travis] and for Windows by [AppVeyor][appveyor], and
-code coverage is calculated with [covr][] and [Codecov][].
+documentation is built with [roxygen2][], and the online package documentation
+is created with [pkgdown][]. Continuous integration testing is performed for
+Linux by [CircleCI][circleci], for macOS by [Travis CI][travis], and for Windows
+by [AppVeyor][appveyor]. Code coverage is calculated with [covr][] and
+[Codecov][].
 
 The template files used by `wflow_start()` to populate a new project are defined
 in the list `templates` in the file `R/infrastructure.R`. The [RStudio project
@@ -36,21 +29,32 @@ template][pt] is configured by `inst/rstudio/templates/project/wflow_start.dcf`.
 The repository contains the files `LICENSE` and `LICENSE.md` to both adhere to
 [R package conventions for defining the license][r-exts-licensing] and also to
 make the license clear in a more conventional manner (suggestions for
-improvement welcome). `document.R` is a convenience script for regenerating the
-documentation. `build.sh` is a convenience script for running `R CMD check`. The
-remaining directories are standard for R packages as described in the manual
-[Writing R Extensions][r-exts].
+improvement welcome). The directory `scripts/` contains convenience scripts for
+maintaining the R package. The remaining directories are standard for R packages
+as described in the manual [Writing R Extensions][r-exts].
+
+## Scripts for maintaining the package
+
+Convenience scripts for maintaining the package are located in `scripts/`. These
+are not included in the package tarball for distribution. They are all intended
+to be executed from the root directory of the package. The convenience scripts
+include:
+
+* `build.sh` runs `R CMD check`
+* `bump-version.R` bumps the version across all the necessary package files
+* `contribute.R` performs some basic checks that should be run before
+contributing a Pull Request
+* `document.R` regenerates the documentation
+* `sed.sh` performs search/replace for all R files in the package
 
 ## Release checklist (for maintainers)
 
-* Bump version in [DESCRIPTION](DESCRIPTION), [NEWS.md](NEWS.md), and
-[the test _workflowr.yml file](tests/testthat/files/test-wflow_update/post/_workflowr.yml)
-* Bump date in [DESCRIPTION](DESCRIPTION)
+* Bump version with [scripts/bump-version.R](scripts/bump-version.R)
 * Update [NEWS.md](NEWS.md): Check `git log` and make sure to reference GitHub
 Issues/PRs
-* Run [document.R](document.R) to update Rd files, install the package locally,
+* Run [scripts/document.R](scripts/document.R) to update Rd files, install the package locally,
 and build the online documentation with [pkgdown][]
-* Run [build.sh](build.sh) to confirm tests pass locally
+* Run [scripts/build.sh](scripts/build.sh) to confirm tests pass locally
 * Test on [rhub][]:
     * Have to validate email first with `rhub::validate_email()`. Copy-paste
     token from email into R console.
@@ -63,13 +67,7 @@ and build the online documentation with [pkgdown][]
 * Update [cran-comments.md](cran-comments.md)
 * Commit with `git commit -am "Bump version: x.x.x.9xxx -> x.x.x and re-build
 docs."`
-* Push with `git push origin dev` and wait for CI builds to pass
-* Merge into master:
-    ```
-    git checkout master
-    git merge dev
-    git push origin master
-    ```
+* Push with `git push origin master` and wait for CI builds to pass
 * Tag with `git tag -a vx.x.x`. Summarize [NEWS.md](NEWS.md) entry into bullet
 points. Run ` git tag -l -n9` for past examples. Push with `git push origin
 --tags`.
@@ -81,10 +79,13 @@ site][cran-submit]. You will receive an email to request confirmation, then an
 email confirming the package was submitted, and then an email with the test
 results. Once it is accepted to CRAN, monitor the [check results][check-results]
 for any surpise errors. Also, these builds are when the binaries are built for
-Windows and macOS, so they aren't available until they are finished.
+Windows and macOS, so they aren't available until they are finished. You will
+receive an email once all the Windows binaries are available for download
+(devel, release, oldrel).
 
 [appveyor]: https://ci.appveyor.com
 [check-results]: https://cran.r-project.org/web/checks/check_results_workflowr.html
+[circleci]: https://circleci.com
 [Codecov]: https://codecov.io/
 [contribute]: http://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1004668#sec011
 [covr]: https://github.com/jimhester/covr

@@ -39,6 +39,7 @@
 #'   \code{NULL}, the default behavior is to build all outdated files (see
 #'   argument \code{make} below). Supports file
 #'   \href{https://en.wikipedia.org/wiki/Glob_(programming)}{globbing}.
+#'   The files are always built in the order they are listed.
 #' @param make logical (default: \code{is.null(files)}). When \code{make =
 #'   TRUE}, build any files that have been modified more recently than their
 #'   corresponding HTML files (inspired by
@@ -53,10 +54,11 @@
 #'   files (that do not have any unstaged or staged changes). Useful for
 #'   site-wide changes like updating the theme, navigation bar, or any other
 #'   setting in \code{_site.yml}.
-#' @param view logical (default: \code{\link{interactive}}). View the website
-#'   with \code{\link{wflow_view}} after building files. If only one file is
-#'   built, it is opened. If more than one file is built, the main index page is
-#'   opened. Not applicable if no files are built or if \code{dry_run = TRUE}.
+#' @param view logical (default: \code{getOption("workflowr.view")}). View the
+#'   website with \code{\link{wflow_view}} after building files. If only one
+#'   file is built, it is opened. If more than one file is built, the main index
+#'   page is opened. Not applicable if no files are built or if \code{dry_run =
+#'   TRUE}.
 #' @param clean_fig_files logical (default: FALSE). Delete existing figure files
 #'   for each R Markdown file prior to building it. This ensures that only
 #'   relevant figure files are saved. As you develop an analysis, it is easy to
@@ -128,7 +130,7 @@
 #' @examples
 #' \dontrun{
 #'
-#' # Build any files which have modified
+#' # Build any files which have been modified
 #' wflow_build() # equivalent to wflow_build(make = TRUE)
 #' # Build a single file
 #' wflow_build("file.Rmd")
@@ -145,76 +147,51 @@
 #' @import rmarkdown
 #' @export
 wflow_build <- function(files = NULL, make = is.null(files),
-                        update = FALSE, republish = FALSE, view = interactive(),
+                        update = FALSE, republish = FALSE,
+                        view = getOption("workflowr.view"),
                         clean_fig_files = FALSE, delete_cache = FALSE,
                         seed = 12345, log_dir = NULL, verbose = FALSE,
                         local = FALSE, dry_run = FALSE, project = ".") {
 
   # Check input arguments ------------------------------------------------------
 
-  if (!is.null(files)) {
-    if (!(is.character(files) && length(files) > 0))
-      stop("files must be NULL or a character vector of filenames")
-    if (any(fs::dir_exists(files)))
-      stop("files cannot include a path to a directory")
-    files <- glob(files)
-    if (!all(fs::file_exists(files)))
-      stop("Not all files exist. Check the paths to the files")
-    # Change filepaths to relative paths
-    files <- relative(files)
-    # Check for valid file extensions
-    ext <- tools::file_ext(files)
-    ext_wrong <- !(ext %in% c("Rmd", "rmd"))
-    if (any(ext_wrong))
-      stop(wrap("File extensions must be either Rmd or rmd."))
-  }
+  files <- process_input_files(files, allow_null = TRUE, rmd_only = TRUE,
+                               convert_to_relative_paths = TRUE)
 
-  if (!(is.logical(make) && length(make) == 1))
-    stop("make must be a one-element logical vector")
-
-  if (!(is.logical(update) && length(update) == 1))
-    stop("update must be a one-element logical vector")
-
-  if (!(is.logical(republish) && length(republish) == 1))
-    stop("republish must be a one-element logical vector")
-
-  if (!(is.logical(view) && length(view) == 1))
-    stop("view must be a one-element logical vector")
-
-  if (!(is.logical(clean_fig_files) && length(clean_fig_files) == 1))
-    stop("clean_fig_files must be a one-element logical vector")
-
-  if (!(is.logical(delete_cache) && length(delete_cache) == 1))
-    stop("delete_cache must be a one-element logical vector")
+  assert_is_flag(make)
+  assert_is_flag(update)
+  assert_is_flag(republish)
+  assert_is_flag(view)
+  assert_is_flag(clean_fig_files)
+  assert_is_flag(delete_cache)
 
   if (!(is.numeric(seed) && length(seed) == 1))
     stop("seed must be a one element numeric vector")
 
-  if (is.null(log_dir)) {
-    log_dir <- file.path(tempdir(), "workflowr")
-  } else if (!(is.character(log_dir) && length(log_dir) == 1)) {
-    stop("log_dir must be NULL or a one element character vector")
-  }
-  log_dir <- absolute(log_dir)
-  fs::dir_create(log_dir)
+  log_dir <- process_log_dir(log_dir)
 
-  if (!(is.logical(verbose) && length(verbose) == 1))
-    stop("verbose must be a one-element logical vector")
-
-  if (!(is.logical(local) && length(local) == 1))
-    stop("local must be a one-element logical vector")
-
-  if (!(is.logical(dry_run) && length(dry_run) == 1))
-    stop("dry_run must be a one-element logical vector")
-
-  if (!(is.character(project) && length(project) == 1))
-    stop("project must be a one-element character vector")
-
-  if (!fs::dir_exists(project)) {
-    stop("project directory does not exist.")
-  }
-
+  assert_is_flag(verbose)
+  assert_is_flag(local)
+  assert_is_flag(dry_run)
+  check_wd_exists()
+  assert_is_single_directory(project)
   project <- absolute(project)
+
+  do.call(wflow_build_, args = as.list(environment()))
+}
+
+wflow_build_ <- function() {}
+formals(wflow_build_) <- formals(wflow_build)
+body(wflow_build_) <- quote({
+
+  # Check to see if pandoc is installed
+  if(!rmarkdown::pandoc_available())
+    stop("Pandoc is not installed. Please use RStudio or install pandoc manually")
+
+  if(rmarkdown::pandoc_version() >= 2 && utils::packageVersion("rmarkdown") < 1.7)
+    stop("pandoc 2+ requires rmarkdown version >= 1.7. Please update your rmarkdown package")
+
+  if (isTRUE(getOption("workflowr.autosave"))) autosave()
 
   # Obtain files to consider ---------------------------------------------------
 
@@ -233,6 +210,22 @@ wflow_build <- function(files = NULL, make = is.null(files),
       "Only files in the analysis directory can be built with wflow_build. Use
       `rmarkdown::render` to build non-workflowr files."))
     }
+  }
+
+  # Check for site generator ---------------------------------------------------
+
+  index <- file.path(p$analysis, "index.Rmd")
+  if (!check_site_generator(index)) {
+    m <-
+    "
+    Missing workflowr-specific site generator. To ensure your workflowr
+    project functions properly, please add the following to the YAML header of
+    index.Rmd:
+
+    site: workflowr::wflow_site
+
+    "
+    warning(wrap(m), call. = FALSE, immediate. = TRUE)
   }
 
   # Determine which files to build ---------------------------------------------
@@ -289,7 +282,7 @@ wflow_build <- function(files = NULL, make = is.null(files),
       dir_cache <- glue::glue("{dir_cache}_cache")
       if (fs::dir_exists(dir_cache)) {
         if (delete_cache) {
-          fs::dir_delete(dir_cache)
+          wflow_delete(dir_cache)
           message("  - Note: Deleted the cache directory before building")
         } else {
           message("  - Note: This file has a cache directory")
@@ -338,7 +331,7 @@ wflow_build <- function(files = NULL, make = is.null(files),
   class(o) <- "wflow_build"
 
   return(o)
-}
+})
 
 #' @export
 print.wflow_build <- function(x, ...) {
@@ -349,6 +342,9 @@ print.wflow_build <- function(x, ...) {
   if (x$republish) cat(" republish: TRUE")
   if (x$clean_fig_files) cat(" clean_fig_files: TRUE")
   if (x$delete_cache) cat(" delete_cache: TRUE")
+  if (x$verbose) cat(" verbose: TRUE")
+  if (x$local) cat(" local: TRUE")
+  if (x$dry_run) cat(" dry_run: TRUE")
   cat("\n\n")
 
   if (length(x$built) == 0) {
@@ -455,3 +451,20 @@ build_rmd <- function(rmd, seed, ...) {
   set.seed(seed)
   rmarkdown::render_site(rmd, ...)
 }
+
+process_log_dir <- function(log_dir) {
+
+  if (is.null(log_dir)) {
+    log_dir <-use_default_log_dir()
+  }
+
+  assert_is_character(log_dir)
+  assert_has_length(log_dir, 1)
+
+  log_dir <- absolute(log_dir)
+  fs::dir_create(log_dir)
+
+  return(log_dir)
+}
+
+use_default_log_dir <- function() file.path(tempdir(), "workflowr")

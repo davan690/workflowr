@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Frequently asked questions • workflowr</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/readable/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Frequently asked questions">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
@@ -30,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">workflowr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.6.0.9000</span>
       </span>
     </div>
 
@@ -58,7 +59,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/jdblischak/workflowr">
-    <span class="fa fa-github fa-lg"></span>
+    <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -71,14 +72,15 @@
 <!--/.navbar -->
 
       
+
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>Frequently asked questions</h1>
-            <h3 class="subtitle">workflowr version 1.2.0</h3>
+            <h3 class="subtitle">workflowr version 1.6.0.9000</h3>
                         <h4 class="author">John Blischak</h4>
             
-            <h4 class="date">2019-02-13</h4>
+            <h4 class="date">2020-01-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jdblischak/workflowr/blob/master/vignettes/wflow-05-faq.Rmd"><code>vignettes/wflow-05-faq.Rmd</code></a></small>
       <div class="hidden name"><code>wflow-05-faq.Rmd</code></div>
@@ -104,8 +106,21 @@
 <div id="can-i-make-my-workflowr-website-private" class="section level2">
 <h2 class="hasAnchor">
 <a href="#can-i-make-my-workflowr-website-private" class="anchor"></a>Can I make my workflowr website private?</h2>
-<p>Short answer: Not if you use the default setup that deploys the site on GitHub Pages. For alternative deployment options, see the vignette <a href="wflow-08-deploy.html">Alternative strategies for deploying workflowr websites</a>. It includes options for public or private websites.</p>
-<p>Long answer: Even if you create a private GitHub repository, the website it creates is still public. If you’re not ready to publish your results online, you can always wait and activate GitHub Pages later. In the meantime, you’ll still have a version-controlled, organized set of results for your project. However, the risk that someone that doesn’t have the link to your website is able to find it is very low. Search engines prioritize the results by how many other sites link to a site, so your website will not be high in the results even if you search for very specific terms. Thus if you only share the URL to your results with your close collaborators, and request that they not share it widely, your website is effectively private. That being said, being truly scooped in science is rare (at best) and openly sharing your work will help establish your expertise in the field (and furthermore establishes your priority), so you should consider keeping both your code and website public. The main caveat to this advice is if you are analyzing data that contains sensitive or restricted information, in which case you should not use GitHub Pages or any other public deployment option.</p>
+<p>Yes. While it it is <strong>not</strong> possible to make a <a href="https://pages.github.com/">GitHub Pages</a> site private (the default setup described in the <a href="wflow-01-getting-started.html">“Getting Started” vignette</a>), there are various other hosting platforms that provide access control. Below are the currently documented options, in order of least to most amount of technical setup required:</p>
+<ul>
+<li>You can host a private site on <a href="https://docs.gitlab.com/ce/user/project/pages/index.html">GitLab Pages</a> and grant access to collaborators. All they need is a GitLab.com account (and they can use a social account, e.g. Twitter, to login to GitLab.com) - <a href="wflow-06-gitlab.html">Deploy your site with GitLab Pages</a>
+</li>
+<li>You can use <a href="https://beakerbrowser.com/">Beaker Browser</a> to securely self-host your site and share the link with collaborators - <a href="wflow-08-deploy.html#beaker-browser-secure-sharing">Deploy your site with Beaker Browser</a>
+</li>
+<li>You can deploy a password-protected site using <a href="https://aws.amazon.com/s3/">Amazon Web Services</a> (requires familiarity with cloud technologies) - <a href="wflow-08-deploy.html#amazon-s3-password-protected">Deploy your site with AWS</a>
+</li>
+</ul>
+<p>To see all the currently documented deployment options, see the vignette <a href="wflow-08-deploy.html">Alternative strategies for deploying workflowr websites</a>.</p>
+</div>
+<div id="how-should-i-manage-large-data-files-in-a-workflowr-project" class="section level2">
+<h2 class="hasAnchor">
+<a href="#how-should-i-manage-large-data-files-in-a-workflowr-project" class="anchor"></a>How should I manage large data files in a workflowr project?</h2>
+<p>Tracking the changes to your project’s large data files is critical for reproducibility. Unfortunately Git, which is the version control software used by workflowr, was designed to version small files containing code. See the vignette <a href="wflow-10-data.html">Using large data files with workflowr</a> for various options for versioning the large data files used in your workflowr project.</p>
 </div>
 <div id="how-can-i-include-external-images-in-my-website" class="section level2">
 <h2 class="hasAnchor">
@@ -114,23 +129,67 @@
 <ol style="list-style-type: decimal">
 <li>
 <p>Create an assets directory to include any file that should be part of the website but is not created by the R Markdown files in <code>analysis/</code>:</p>
-<pre><code><a href="https://www.rdocumentation.org/packages/base/topics/files2">   dir.create("docs/assets")</a></code></pre>
+<pre><code><a href="https://rdrr.io/r/base/files2.html">dir.create("docs/assets")</a></code></pre>
 </li>
 <li>Move the image file(s) to <code>docs/assets/</code>
 </li>
 <li>
 <p>In the R Markdown file, refer to the image file(s) using the relative path from <code>docs/</code> (because this is where the HTML files are located), e.g.:</p>
-<pre><code>   ![](assets/external.png)</code></pre>
-</li>
+<pre><code>![](assets/external.png)</code></pre>
+<p>Alternatively, you could use <code><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html">knitr::include_graphics()</a></code> inside of an R code chunk, which will automatically center the image and also follow the knitr chunk options <code>out.width</code> and <code>out.height</code>:</p>
+<pre><code><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html">knitr::include_graphics("assets/external.png")</a></code></pre>
+Note that the image will not be previewed in the R Markdown file inside of RStudio because it is in a different directory than the R Markdown file.</li>
 <li>Run <code><a href="../reference/wflow_build.html">wflow_build()</a></code> to confirm the external image file(s) are properly displayed</li>
 <li>
 <p>Use <code><a href="../reference/wflow_git_commit.html">wflow_git_commit()</a></code> to commit the file(s) to the Git repo (so that they get pushed to GitHub):</p>
-<pre><code><a href="../reference/wflow_git_commit.html">   wflow_git_commit("docs/assets/external.png", "Add external image of ...")
-   # If you are adding multiple files, you could use a file glob
-   wflow_git_commit("docs/assets/*.png", "Add external images of ...")</a></code></pre>
+<pre><code><a href="../reference/wflow_git_commit.html">wflow_git_commit("docs/assets/external.png", "Add external image of ...")
+# If you are adding multiple files, you could use a file glob
+wflow_git_commit("docs/assets/*.png", "Add external images of ...")</a></code></pre>
 </li>
 <li><p>Run <code><a href="../reference/wflow_publish.html">wflow_publish()</a></code> on the R Markdown file that contains the external image file(s)</p></li>
 </ol>
+</div>
+<div id="how-can-i-save-a-figure-in-a-vector-graphics-format-e-g-pdf" class="section level2">
+<h2 class="hasAnchor">
+<a href="#how-can-i-save-a-figure-in-a-vector-graphics-format-e-g-pdf" class="anchor"></a>How can I save a figure in a vector graphics format (e.g. PDF)?</h2>
+<p>The default file format is PNG. This is ideal for displaying figure files on a web page. However, you might need to import a figure into a vector graphics editor (e.g. Illustrator, Inkscape) for final editing for a manuscript. There are multiple options for achieving this.</p>
+<p>One option is to switch to the file format SVG. It is a vector graphics format that is also well supported by web browsers. The code chunk below saves the figure file as an SVG:</p>
+<pre><code>```{r plot-for-paper, dev='svg'}
+library(ggplot2)
+data(mtcars)
+p &lt;- ggplot(mtcars, aes(x = mpg, y = disp)) + geom_point()
+p
+```</code></pre>
+<p>To apply this to every figure file in a particular document, you can create a “setup” chunk at the beginning of the document that sets the <a href="https://yihui.name/knitr/options/">knitr chunk option</a> globally:</p>
+<pre><code>```{r setup, dev='svg'}
+knitr::opts_chunk$set(dev = 'svg')
+```</code></pre>
+<p>Another option is to simultaneously create a PNG for display in the web page and a PDF for further editing. The example code below saves both a PNG and PDF version of the figure, but inserts the PNG into the web page:</p>
+<pre><code>```{r plot-for-paper, dev=c('png', 'pdf')}
+library(ggplot2)
+data(mtcars)
+p &lt;- ggplot(mtcars, aes(x = mpg, y = disp)) + geom_point()
+p
+```</code></pre>
+<p>The main advantage of the above approaches is that the figure files are still saved in an organized fashion (i.e. the file path is still something like <code>docs/figure/file.Rmd/chunk-name.ext</code>). Furthermore, <code><a href="../reference/wflow_publish.html">wflow_publish()</a></code> will automatically version the figure files regardless of the file extension.</p>
+<p>A similar option to the one above is to have two separate code chunks. The advantage of this more verbose option is that you can specify different chunk names (and thus different filenames) and also set different <code>fig.width</code> and <code>fig.height</code> for the website and paper versions. By setting <code>include=FALSE</code> for the second chunk, neither the code nor the PDF figure file is displayed in the web page.</p>
+<pre><code>```{r plot-for-paper}
+library(ggplot2)
+data(mtcars)
+p &lt;- ggplot(mtcars, aes(x = mpg, y = disp)) + geom_point()
+p
+```</code></pre>
+<pre><code>```{r figure1A, include=FALSE, dev='pdf', fig.height=3, fig.width=9}
+p
+```</code></pre>
+<p>However, for the most control, you can always save the figure manually, e.g. using <code>ggsave()</code>. For example, the example chunk below creates a 10x10 inch PNG file that is automatically versioned by workflowr, but also uses <code>ggsave()</code> to save a 5x5 inch PDF file in the subdirectory <code>paper/</code> (which would need to be manually committed by the user, e.g. with <code><a href="../reference/wflow_git_commit.html">wflow_git_commit()</a></code>):</p>
+<pre><code>```{r plot-for-paper, fig.width=10, fig.height=10}
+library(ggplot2)
+data(mtcars)
+p &lt;- ggplot(mtcars, aes(x = mpg, y = disp)) + geom_point()
+p
+ggsave("paper/plot-to-edit.pdf", width = 5, height = 5)
+```</code></pre>
 </div>
 <div id="can-i-include-shiny-apps-in-my-website" class="section level2">
 <h2 class="hasAnchor">
@@ -142,58 +201,121 @@
 <a href="#can-i-change-x-on-my-website" class="anchor"></a>Can I change “X” on my website?</h2>
 <p>Almost certainly yes, but some things are easier to customize than others. The vignette <a href="wflow-02-customization.html">Customize your research website</a> provides some ideas that are simple to implement. Check out the documentation for <a href="http://rmarkdown.rstudio.com/">rmarkdown</a> and <a href="http://getbootstrap.com/">Twitter Bootstrap</a> for inspiration.</p>
 </div>
+<div id="how-can-i-suppress-the-workflowr-report" class="section level2">
+<h2 class="hasAnchor">
+<a href="#how-can-i-suppress-the-workflowr-report" class="anchor"></a>How can I suppress the workflowr report?</h2>
+<p>To suppress the insertion of the workflowr report for all of the files in your project, activate the option <code>suppress_report</code> in the <code>_workflowr.yml</code> file by adding the following line:</p>
+<pre><code>suppress_report: TRUE</code></pre>
+<p>And then republishing your project:</p>
+<pre><code><a href="../reference/wflow_publish.html">wflow_publish("_workflowr.yml", republish = TRUE)</a></code></pre>
+<p>To suppress the workflowr report only for a specific file, add the following lines to its YAML header:</p>
+<pre><code>workflowr:
+  suppress_report: TRUE</code></pre>
+</div>
 <div id="why-am-i-not-getting-the-same-result-with-wflow_build-as-with-the-rstudio-knit-html-button" class="section level2">
 <h2 class="hasAnchor">
 <a href="#why-am-i-not-getting-the-same-result-with-wflow_build-as-with-the-rstudio-knit-html-button" class="anchor"></a>Why am I not getting the same result with wflow_build() as with the RStudio Knit HTML button?</h2>
-<p><code><a href="../reference/wflow_build.html">wflow_build()</a></code> is designed to have the same functionality as the Knit HTML button in RStudio, namely that it knits the HTML file in a separate R session to avoid any clashes with variables or pacakges in use in the current R session. However, the technical implementations are not identical, and thus informally we have noticed the behavior of the two options occassionally differs. At the moment, we believe that if the file results in an error when using <code><a href="../reference/wflow_build.html">wflow_build()</a></code>, the file needs to be fixed, regardless of whether the file is able to be built with the RStudio button. If you have a use case that you think should be supported by <code><a href="../reference/wflow_build.html">wflow_build()</a></code>, please open an <a href="https://github.com/jdblischak/workflowr/issues">Issue</a> and provide a small reproducible example.</p>
+<p><code><a href="../reference/wflow_build.html">wflow_build()</a></code> is designed to have the same functionality as the Knit HTML button in RStudio, namely that it knits the HTML file in a separate R session to avoid any clashes with variables or packages in use in the current R session. However, the technical implementations are not identical, and thus informally we have noticed the behavior of the two options occasionally differs. At the moment, we believe that if the file results in an error when using <code><a href="../reference/wflow_build.html">wflow_build()</a></code>, the file needs to be fixed, regardless of whether the file is able to be built with the RStudio button. If you have a use case that you think should be supported by <code><a href="../reference/wflow_build.html">wflow_build()</a></code>, please open an <a href="https://github.com/jdblischak/workflowr/issues">Issue</a> and provide a small reproducible example.</p>
 </div>
-<div id="can-i-share-workflowr-websites-directly-with-collaborators-in-a-secure-fashion" class="section level2">
+<div id="how-should-i-install-packages-to-use-with-a-workflowr-project" class="section level2">
 <h2 class="hasAnchor">
-<a href="#can-i-share-workflowr-websites-directly-with-collaborators-in-a-secure-fashion" class="anchor"></a>Can I share workflowr websites directly with collaborators in a secure fashion?</h2>
-<p>Yes. Please see these <a href="wflow-08-deploy.html#beaker-browser-secure-sharing">instructions</a> for deploying a workflowr project securely with <a href="https://beakerbrowser.com/">Beaker Browser</a>.</p>
-</div>
-<div id="can-i-password-protect-my-website" class="section level2">
-<h2 class="hasAnchor">
-<a href="#can-i-password-protect-my-website" class="anchor"></a>Can I password-protect my website?</h2>
-<p>Yes. Please see these <a href="wflow-08-deploy.html#amazon-s3-password-protected">instructions</a> for deploying a workflowr project with password-protection using <a href="https://aws.amazon.com/s3/">Amazon S3</a>.</p>
+<a href="#how-should-i-install-packages-to-use-with-a-workflowr-project" class="anchor"></a>How should I install packages to use with a workflowr project?</h2>
+<p>When you start a new workflowr project with <code><a href="../reference/wflow_start.html">wflow_start()</a></code>, it automatically creates a local <code>.Rprofile</code> file that only affects your R session when you run R from within your workflowr project. This is why you see the following lines each time you open R:</p>
+<pre><code>Loading .Rprofile for the current workflowr project
+This is workflowr version 1.3.0
+Run ?workflowr for help getting started
+&gt;</code></pre>
+<p>This is intended to be a convenience so that you don’t have to type <code><a href="https://rdrr.io/r/base/library.html">library(workflowr)</a></code> every time you return to your project (or restart your R session). However, the downside is that this has the potential to cause problems when you install new packages. If you attempt to install one of the packages that workflowr depends on, or if you attempt to install a package that then updates one of these dependencies, this may cause an error. For example, here is a typical error caused by updating git2r when the workflowr package is loaded:</p>
+<pre><code>Error: package or namespace load failed for ‘git2r’ in get(method, envir = home):
+ lazy-load database '/usr/local/lib/R/site-library/git2r/R/git2r.rdb' is corrupt
+In addition: Warning message:
+In get(method, envir = home) : internal error -3 in R_decompress1</code></pre>
+<p>The short term solution is to restart your current R session, which should fix everything. In the long term, if you start to get this type of error often, you can try one of the following strategies:</p>
+<ol style="list-style-type: decimal">
+<li>Always restart your R session after installing new packages (Ctrl/Command+Shift+F10 in RStudio)</li>
+<li>Open R from a directory that is not a workflowr project when installing new packages</li>
+<li>Delete <code>.Rprofile</code> with <code><a href="../reference/wflow_remove.html">wflow_remove(".Rprofile")</a></code> and manually load workflowr with <code><a href="https://rdrr.io/r/base/library.html">library(workflowr)</a></code> every time you start a new R session</li>
+</ol>
 </div>
 <div id="can-i-create-a-single-html-or-pdf-file-of-one-of-my-workflowr-r-markdown-files" class="section level2">
 <h2 class="hasAnchor">
 <a href="#can-i-create-a-single-html-or-pdf-file-of-one-of-my-workflowr-r-markdown-files" class="anchor"></a>Can I create a single HTML or PDF file of one of my workflowr R Markdown files?</h2>
 <p>Yes! If you’d like to create a single HTML or PDF file to distribute an isolated analysis from your project, you can directly run the <a href="http://rmarkdown.rstudio.com/">rmarkdown</a> function <code>render</code>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(<span class="st">"rmarkdown"</span>)
-<span class="co"># Create analysis/file.html</span>
-<span class="kw"><a href="https://www.rdocumentation.org/packages/rmarkdown/topics/render">render</a></span>(<span class="st">"analysis/file.Rmd"</span>, <span class="kw"><a href="https://www.rdocumentation.org/packages/rmarkdown/topics/html_document">html_document</a></span>())
-<span class="co"># Create analysis/file.pdf</span>
-<span class="kw"><a href="https://www.rdocumentation.org/packages/rmarkdown/topics/render">render</a></span>(<span class="st">"analysis/file.Rmd"</span>, <span class="kw"><a href="https://www.rdocumentation.org/packages/rmarkdown/topics/pdf_document">pdf_document</a></span>())</code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"rmarkdown"</span>)</a>
+<a class="sourceLine" id="cb16-2" data-line-number="2"><span class="co"># Create analysis/file.html</span></a>
+<a class="sourceLine" id="cb16-3" data-line-number="3"><span class="kw"><a href="https://rdrr.io/pkg/rmarkdown/man/render.html">render</a></span>(<span class="st">"analysis/file.Rmd"</span>, <span class="kw"><a href="https://rdrr.io/pkg/rmarkdown/man/html_document.html">html_document</a></span>())</a>
+<a class="sourceLine" id="cb16-4" data-line-number="4"><span class="co"># Create analysis/file.pdf</span></a>
+<a class="sourceLine" id="cb16-5" data-line-number="5"><span class="kw"><a href="https://rdrr.io/pkg/rmarkdown/man/render.html">render</a></span>(<span class="st">"analysis/file.Rmd"</span>, <span class="kw"><a href="https://rdrr.io/pkg/rmarkdown/man/pdf_document.html">pdf_document</a></span>())</a></code></pre></div>
 <p>There are two main caveats to this:</p>
 <ol style="list-style-type: decimal">
 <li>Internal links to other HTML pages in your workflowr site will be broken since they are not being distributed with the single file.</li>
 <li>An R Markdown file that can be converted to HTML is not guaranteed to be converted to PDF. You’ll need to ensure that you have LaTeX installed on your computer and avoid complicated characters and/or syntax.</li>
 </ol>
+<p>If you’d like to use the RStudio button “Knit to PDF”, then you need to make sure that the YAML header still contains the workflowr output format. For example, the YAML header below contains a valid output section:</p>
+<pre><code>---
+output:
+  pdf_document: default
+  workflowr::wflow_html: default
+---</code></pre>
+</div>
+<div id="can-i-use-r-notebooks-with-workflowr" class="section level2">
+<h2 class="hasAnchor">
+<a href="#can-i-use-r-notebooks-with-workflowr" class="anchor"></a>Can I use R notebooks with workflowr?</h2>
+<p>Yes! You can use RStudio’s notebook features while you interactively develop your analysis, either directly using the output format <code><a href="https://rdrr.io/pkg/rmarkdown/man/html_notebook.html">rmarkdown::html_notebook()</a></code> or indirectly with “inline code chunks” in your R Markdown files. However, you need to take a few precautions to make sure your notebook-style usage is compatible with the workflowr options.</p>
+<p>First note that the R Markdown files created by <code><a href="../reference/wflow_start.html">wflow_start()</a></code> and <code><a href="../reference/wflow_open.html">wflow_open()</a></code> include the lines below in the YAML header. These purposefully disable inline code chunks to proactively prevent any potential incompatibilities with workflowr. To activate inline code chunks, you can either delete these two lines or replace <code>console</code> with <code>inline</code>.</p>
+<pre><code>editor_options:
+  chunk_output_type: console</code></pre>
+<p>Second, note that the working directory of the inline code chunks can be different than the working directory of the R console. This is very counterintuitive, but the working directory of the inline code chunks is set by the “Knit Directory” setting in RStudio. The setting of “Knit Directory” may be different in your collaborator’s version of RStudio, or even your own RStudio installed on a different computer. Thus it’s not a good idea to rely on this value. Instead, you can explicitly specify the working directory to be used for the inline code chunks by setting the knitr option <code>root.dir</code> in a chunk called <code>setup</code>, which RStudio treats specially. Adding the code chunk below to your R Markdown file will cause all the inline code chunks to be executed from the root of the project directory. This is consistent with the default workflowr setting.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="bn">```{r setup}</span></a>
+<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="bn">knitr::opts_knit$set(root.dir = "..")</span></a>
+<a class="sourceLine" id="cb19-3" data-line-number="3"><span class="bn">```</span></a></code></pre></div>
+<p>If you change the value of <code>knit_root_dir</code> in <code>_workflowr.yml</code>, then you would need to change the value of <code>root.dir</code> in the setup chunk accordingly. Warning that this is fragile, i.e. trying to change <code>root.dir</code> to any arbitrary directory may result in an error. If you’re going to use inline code chunks, it’s best two follow one of the following options:</p>
+<ol style="list-style-type: decimal">
+<li><p>Execute code in the root of the project directory (the default workflowr setting). Don’t change <code>knit_root_dir</code> in <code>_workflowr.yml</code>. Add the setup chunk defined above to your R Markdown files. Note that this setup chunk will affect RStudio but not the workflowr functions <code><a href="../reference/wflow_build.html">wflow_build()</a></code> or <code><a href="../reference/wflow_publish.html">wflow_publish()</a></code>.</p></li>
+<li><p>Execute code in the R Markdown directory (named <code>analysis/</code> by default). Delete the <code>knit_root_dir</code> entry in <code>_workflowr.yml</code>. Don’t explicitly set <code>root.dir</code> in a setup code chunk in your R Markdown files. Ensure that the RStudio setting “Knit Directory” is set to “Document Directory”.</p></li>
+</ol>
+<p>Third, note that if you are using <code><a href="https://rdrr.io/pkg/rmarkdown/man/html_notebook.html">html_notebook()</a></code>, any settings you specify for it will be ignored when you run <code><a href="../reference/wflow_build.html">wflow_build()</a></code> or <code><a href="../reference/wflow_publish.html">wflow_publish()</a></code>. This is because the settings in <code>_site.yml</code> override them. If you wish to change the setting of one particular notebook file, as opposed to every file in your project, you can set it with <code><a href="../reference/wflow_html.html">workflowr::wflow_html()</a></code>. For example, if you want to enable folding of code chunks and disable the table of contents for only this file, you could use the following YAML header.</p>
+<pre><code>---
+title: "Using R Notebook with workflowr"
+output:
+  html_notebook: default
+  workflowr::wflow_html:
+    toc: false
+    code_folding: show
+---</code></pre>
 </div>
 <div id="how-should-i-pronounce-and-spell-workflowr" class="section level2">
 <h2 class="hasAnchor">
 <a href="#how-should-i-pronounce-and-spell-workflowr" class="anchor"></a>How should I pronounce and spell workflowr?</h2>
-<p>You can say “workflowr + er” or “workflowr + R”, whichever is more natural to you.</p>
+<p>There are multiple options for pronouncing workflowr:</p>
+<ol style="list-style-type: decimal">
+<li>workflow + er</li>
+<li>workflow + R</li>
+<li>work + flower</li>
+</ol>
+<p>I (John) started primarily saying “workflow + er” but have more recently transitioned to saying “workflow + R” more often. You can choose whichever is most natural to you.</p>
 <p>Workflowr should be capitalized at the beginning of a sentence, but otherwise the lowercase workflowr should be the preferred option.</p>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+
         <div id="tocnav">
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
 <li><a href="#why-isnt-my-website-displaying-online">Why isn’t my website displaying online?</a></li>
       <li><a href="#can-i-make-my-workflowr-website-private">Can I make my workflowr website private?</a></li>
+      <li><a href="#how-should-i-manage-large-data-files-in-a-workflowr-project">How should I manage large data files in a workflowr project?</a></li>
       <li><a href="#how-can-i-include-external-images-in-my-website">How can I include external images in my website?</a></li>
+      <li><a href="#how-can-i-save-a-figure-in-a-vector-graphics-format-e-g-pdf">How can I save a figure in a vector graphics format (e.g. PDF)?</a></li>
       <li><a href="#can-i-include-shiny-apps-in-my-website">Can I include Shiny apps in my website?</a></li>
       <li><a href="#can-i-change-x-on-my-website">Can I change “X” on my website?</a></li>
+      <li><a href="#how-can-i-suppress-the-workflowr-report">How can I suppress the workflowr report?</a></li>
       <li><a href="#why-am-i-not-getting-the-same-result-with-wflow_build-as-with-the-rstudio-knit-html-button">Why am I not getting the same result with wflow_build() as with the RStudio Knit HTML button?</a></li>
-      <li><a href="#can-i-share-workflowr-websites-directly-with-collaborators-in-a-secure-fashion">Can I share workflowr websites directly with collaborators in a secure fashion?</a></li>
-      <li><a href="#can-i-password-protect-my-website">Can I password-protect my website?</a></li>
+      <li><a href="#how-should-i-install-packages-to-use-with-a-workflowr-project">How should I install packages to use with a workflowr project?</a></li>
       <li><a href="#can-i-create-a-single-html-or-pdf-file-of-one-of-my-workflowr-r-markdown-files">Can I create a single HTML or PDF file of one of my workflowr R Markdown files?</a></li>
+      <li><a href="#can-i-use-r-notebooks-with-workflowr">Can I use R notebooks with workflowr?</a></li>
       <li><a href="#how-should-i-pronounce-and-spell-workflowr">How should I pronounce and spell workflowr?</a></li>
       </ul>
 </div>
@@ -202,17 +324,20 @@
 </div>
 
 
+
       <footer><div class="copyright">
   <p>Developed by John Blischak, Peter Carbonetto, Matthew Stephens.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
 </div>
 
   
+
 
   </body>
 </html>

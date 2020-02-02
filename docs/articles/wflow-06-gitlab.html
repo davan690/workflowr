@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hosting workflowr websites using GitLab • workflowr</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/readable/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Hosting workflowr websites using GitLab">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
@@ -30,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">workflowr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.6.0.9000</span>
       </span>
     </div>
 
@@ -58,7 +59,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/jdblischak/workflowr">
-    <span class="fa fa-github fa-lg"></span>
+    <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -71,14 +72,15 @@
 <!--/.navbar -->
 
       
+
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>Hosting workflowr websites using GitLab</h1>
-            <h3 class="subtitle">workflowr version 1.2.0</h3>
+            <h3 class="subtitle">workflowr version 1.6.0.9000</h3>
                         <h4 class="author">Luke Zappia, John Blischak</h4>
             
-            <h4 class="date">2019-02-13</h4>
+            <h4 class="date">2020-01-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jdblischak/workflowr/blob/master/vignettes/wflow-06-gitlab.Rmd"><code>vignettes/wflow-06-gitlab.Rmd</code></a></small>
       <div class="hidden name"><code>wflow-06-gitlab.Rmd</code></div>
@@ -90,7 +92,7 @@
 <div id="what-is-in-this-vignette" class="section level2">
 <h2 class="hasAnchor">
 <a href="#what-is-in-this-vignette" class="anchor"></a>What is in this vignette?</h2>
-<p>By default workflowr assumes that the project will be hosted on GitHub, but this is not always the case. Users may prefer to use another service or have a private git repository hosting instance. This vignette details how to host a workflowr project on GitLab. For more details, see the documentation for <a href="https://docs.gitlab.com/ee/ci/yaml/README.html#pages">GitLab Pages</a>. Similar steps will be required for other platforms but some of the specifics will be different.</p>
+<p>By default workflowr assumes that the project will be hosted on GitHub, but this is not always the case. Users may prefer to use another service or have a private Git repository hosting instance. This vignette details how to host a workflowr project on GitLab. Unlike GitHub Pages, GitLab Pages offers both public and private sites. For more details, see the documentation for <a href="https://docs.gitlab.com/ee/ci/yaml/README.html#pages">GitLab Pages</a>. Similar steps will be required for other platforms but some of the specifics will be different.</p>
 </div>
 <div id="step-0-set-up-a-project" class="section level2">
 <h2 class="hasAnchor">
@@ -100,13 +102,14 @@
 <div id="step-1-create-a-remote-repository-on-gitlab" class="section level2">
 <h2 class="hasAnchor">
 <a href="#step-1-create-a-remote-repository-on-gitlab" class="anchor"></a>Step 1: Create a remote repository on GitLab</h2>
+<p><strong>Note:</strong> You can skip this step if you’d like because GitLab will automatically create the new repository after you push it in Step 4 below. This <a href="https://docs.gitlab.com/ee/gitlab-basics/create-project.html#push-to-create-a-new-project">feature</a> was introduced in <a href="https://about.gitlab.com/2018/02/22/gitlab-10-5-released/">GitLab 10.5</a>, released in February 2018.</p>
 <p>Log in to the GitLab instance you want to use and create a repository to host your project (follow this <a href="https://gitlab.com/projects/new">link</a> if you are using GitLab.com). We recommend setting the project to be Public so that others can inspect the code behind your results and extend your work.</p>
 </div>
 <div id="step-2-configure-your-local-workflowr-project-to-use-gitlab" class="section level2">
 <h2 class="hasAnchor">
 <a href="#step-2-configure-your-local-workflowr-project-to-use-gitlab" class="anchor"></a>Step 2: Configure your local workflowr project to use GitLab</h2>
-<p>You will need to know your user name and the repository name for the following steps (here we are going to use “myname” and “myproject”) as well as a URL for the hosting instance. The example below assumes you are using GitLab.com. If instead you are using a custom instance of GitLab, you will need to change the value for the argument <code>domain</code> accordingly <a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/wflow_use_gitlab.html">wflow_use_gitlab</a></span>(<span class="dt">username =</span> <span class="st">"myname"</span>, <span class="dt">repository =</span> <span class="st">"myproject"</span>)</code></pre></div>
+<p>You will need to know your user name and the repository name for the following steps (here we are going to use “myname” and “myproject”) as well as a URL for the hosting instance. The example below assumes you are using GitLab.com. If instead you are using a custom instance of GitLab, you will need to change the value for the argument <code>domain</code> accordingly <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw"><a href="../reference/wflow_use_gitlab.html">wflow_use_gitlab</a></span>(<span class="dt">username =</span> <span class="st">"myname"</span>, <span class="dt">repository =</span> <span class="st">"myproject"</span>)</a></code></pre></div>
 <p>The function <code><a href="../reference/wflow_use_gitlab.html">wflow_use_gitlab()</a></code> automates all the local configuration necessary to use GitLab. It changes the website directory from <code>docs/</code> to <code>public/</code>, it creates the GitLab-specific configuration file <code>.gitlab-ci.yml</code> with the necessary settings, and it connects the local Git repository to communicate with the remote repository on GitLab.</p>
 </div>
 <div id="step-3-republish-the-analyses" class="section level2">
@@ -119,8 +122,14 @@
 <h2 class="hasAnchor">
 <a href="#step-4-push-to-gitlab" class="anchor"></a>Step 4: Push to GitLab</h2>
 <p>As a final step, push the workflowr project to GitLab (you will be prompted for your GitLab username and password):</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/wflow_git_push.html">wflow_git_push</a></span>()</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw"><a href="../reference/wflow_git_push.html">wflow_git_push</a></span>()</a></code></pre></div>
 <p>If this step has worked correctly you should be able to refresh your GitLab page and see all the files in your workflowr project. You can view your site at <code>myname.gitlab.io/myproject/</code>, replacing with your username and project (note it may take a minute for the site to be deployed).</p>
+<p>If you skipped Step 1 above, the new repository created during the initial push will be private by default. Unless you are working with sensitive data, you should consider making the project public so that it is easier to share with other researchers (e.g. collaborators, reviewers). You can change the visibility by going to <code>Settings</code> -&gt; <code>General</code> -&gt; <code>Visibility</code> and changing <code>Project visibility</code> to <code>Public</code>.</p>
+</div>
+<div id="access-control-for-private-sites" class="section level2">
+<h2 class="hasAnchor">
+<a href="#access-control-for-private-sites" class="anchor"></a>Access control for private sites</h2>
+<p>If you need to keep your project private, you can <a href="https://gitlab.com/help/user/project/pages/pages_access_control.md">grant access</a> to your collaborators by going to <code>Settings</code> -&gt; <code>Members</code>. You can invite them to the project via email, but they’ll need a GitLab login to access the source code and site. They can login to GitLab using common social sites like Google and Twitter.</p>
 </div>
 <div id="compatibility-with-custom-gitlab-instances" class="section level2">
 <h2 class="hasAnchor">
@@ -132,12 +141,13 @@
 <div class="footnotes">
 <hr>
 <ol>
-<li id="fn1"><p>For example, the University of Chicago hosts a GitLab instance for its researchers at <a href="https://git.rcc.uchicago.edu/" class="uri">https://git.rcc.uchicago.edu/</a>, which would require setting <code>domain = "git.rcc.uchicago.edu"</code><a href="#fnref1">↩</a></p></li>
+<li id="fn1"><p>For example, the University of Chicago hosts a GitLab instance for its researchers at <a href="https://git.rcc.uchicago.edu/" class="uri">https://git.rcc.uchicago.edu/</a>, which would require setting <code>domain = "git.rcc.uchicago.edu"</code><a href="#fnref1" class="footnote-back">↩</a></p></li>
 </ol>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+
         <div id="tocnav">
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
@@ -148,6 +158,7 @@
       <li><a href="#step-2-configure-your-local-workflowr-project-to-use-gitlab">Step 2: Configure your local workflowr project to use GitLab</a></li>
       <li><a href="#step-3-republish-the-analyses">Step 3: Republish the analyses</a></li>
       <li><a href="#step-4-push-to-gitlab">Step 4: Push to GitLab</a></li>
+      <li><a href="#access-control-for-private-sites">Access control for private sites</a></li>
       <li><a href="#compatibility-with-custom-gitlab-instances">Compatibility with custom GitLab instances</a></li>
       </ul>
 </div>
@@ -156,17 +167,20 @@
 </div>
 
 
+
       <footer><div class="copyright">
   <p>Developed by John Blischak, Peter Carbonetto, Matthew Stephens.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
 </div>
 
   
+
 
   </body>
 </html>

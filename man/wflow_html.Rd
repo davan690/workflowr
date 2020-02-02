@@ -23,7 +23,7 @@ documentation} for the available options), and 2) configure the workflowr
 reproducibility features (typically specified in a file named
 \code{_workflowr.yml}). \code{wflow_html} is intended to be used to generate
 webpages for a workflowr website, but it can also be used outside a workflowr
-project to implement reproducibilty features for single R Markdown documents.
+project to implement reproducibility features for single R Markdown documents.
 }
 \section{HTML formatting}{
 
@@ -114,6 +114,11 @@ as follows:
   \code{_workflowr.yml} is especially helpful if multiple users are
   collaborating on a project since it ensures that everyone generates the
   same URLs.}
+
+  \item{suppress_report}{By default a workflowr report is inserted at the top
+  of every HTML file containing useful summaries of the reproducibility
+  features and links to past versions of the analysis. To suppress this
+  report, set \code{suppress_report} to \code{TRUE}}.
 }
 
 In the default workflowr setup, the file \code{_workflowr.yml} is located in

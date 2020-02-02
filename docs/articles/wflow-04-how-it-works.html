@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>How the workflowr package works • workflowr</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/readable/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="How the workflowr package works">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
@@ -30,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">workflowr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.6.0</span>
       </span>
     </div>
 
@@ -58,7 +59,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/jdblischak/workflowr">
-    <span class="fa fa-github fa-lg"></span>
+    <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -71,14 +72,15 @@
 <!--/.navbar -->
 
       
+
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>How the workflowr package works</h1>
-            <h3 class="subtitle">workflowr version 1.2.0</h3>
+            <h3 class="subtitle">workflowr version 1.6.0</h3>
                         <h4 class="author">John Blischak</h4>
             
-            <h4 class="date">2019-02-13</h4>
+            <h4 class="date">2019-12-18</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jdblischak/workflowr/blob/master/vignettes/wflow-04-how-it-works.Rmd"><code>vignettes/wflow-04-how-it-works.Rmd</code></a></small>
       <div class="hidden name"><code>wflow-04-how-it-works.Rmd</code></div>
@@ -93,7 +95,7 @@
 <a href="#overview" class="anchor"></a>Overview</h2>
 <p><a href="https://cran.r-project.org/">R</a> is the computer programming language used to perform the analysis. <a href="http://yihui.name/knitr/">knitr</a> is an R package that executes code chunks in an R Markdown file to create a Markdown file. <a href="http://daringfireball.net/projects/markdown/">Markdown</a> is a lightweight markup language that is easier to read and write than HTML. <a href="http://rmarkdown.rstudio.com/">rmarkdown</a> is an R package that combines the functionality of <a href="http://yihui.name/knitr/">knitr</a> and the document converter <a href="http://pandoc.org/">pandoc</a>. <a href="http://pandoc.org/">Pandoc</a> powers the conversion of <a href="http://yihui.name/knitr/">knitr</a>-produced Markdown files into HTML, Word, or PDF documents. Additionally, newer versions of <a href="http://rmarkdown.rstudio.com/">rmarkdown</a> contain functions for building websites. The styling of the websites is performed by the web framework <a href="http://getbootstrap.com/">Bootstrap</a>. <a href="http://getbootstrap.com/">Bootstrap</a> implements the navigation bar at the top of the website, has many available themes to customize the look of the site, and dynamically adjusts the website so it can be viewed on a desktop, tablet, or mobile device. The <a href="http://rmarkdown.rstudio.com/">rmarkdown</a> website configuration file <code>_site.yml</code> allows convenient customization of the <a href="http://getbootstrap.com/">Bootstrap</a> navigation bar and theme.</p>
 <p><a href="http://git-scm.com/">Git</a> is a distributed version control system (VCS) that tracks code development. It has many powerful features, but only a handful of the main functions are required to use workflowr. <a href="https://cran.r-project.org/package=git2r">git2r</a> is an R package which provides an interface to <a href="https://libgit2.github.com/">libgit2</a>, which is a portable, pure C implementation of the Git core methods (this is why you don’t need to install Git before using workflowr). <a href="https://github.com/">GitHub</a> is a website that hosts <a href="http://git-scm.com/">Git</a> repositories and additionally provides collaboration tools for developing software. <a href="https://pages.github.com/">GitHub Pages</a> is a <a href="https://github.com/">GitHub</a> service that offers free hosting of <a href="https://en.wikipedia.org/wiki/Static_web_page">static websites</a>. By placing the HTML files for the website in the subdirectory <code>docs/</code>, <a href="https://pages.github.com/">GitHub Pages</a> serves them online.</p>
-<p>To aid reproducibility, workflowr provides an R Markdown output format <code><a href="../reference/wflow_html.html">wflow_html()</a></code> template that automatically sets a seed for random number generation, records the session information, and reports the status of the Git repository (so you always know which version of the code produced the results contained in that particular file). These options are controlled by the settings in <code>_workflowr.yml</code>. It also provides a custom site generator <code><a href="../reference/wflow_site.html">wflow_site()</a></code> that enables <code><a href="../reference/wflow_html.html">wflow_html()</a></code> to work with R Markdown websites. These options are contolled in <code>analysis/_site.yml</code>.</p>
+<p>To aid reproducibility, workflowr provides an R Markdown output format <code><a href="../reference/wflow_html.html">wflow_html()</a></code> template that automatically sets a seed for random number generation, records the session information, and reports the status of the Git repository (so you always know which version of the code produced the results contained in that particular file). These options are controlled by the settings in <code>_workflowr.yml</code>. It also provides a custom site generator <code><a href="../reference/wflow_site.html">wflow_site()</a></code> that enables <code><a href="../reference/wflow_html.html">wflow_html()</a></code> to work with R Markdown websites. These options are controlled in <code>analysis/_site.yml</code>.</p>
 </div>
 <div id="where-are-the-figures" class="section level2">
 <h2 class="hasAnchor">
@@ -121,7 +123,7 @@
 <a href="#background-and-related-work" class="anchor"></a>Background and related work</h2>
 <p>There is lots of interest and development around reproducible research with R. Projects like workflowr are possible due to two key developments. First, the R packages <a href="http://yihui.name/knitr/">knitr</a> and <a href="http://rmarkdown.rstudio.com/">rmarkdown</a> have made it easy for any R programmer to generate reports that combine text, code, output, and figures. Second, the version control software <a href="http://git-scm.com/">Git</a>, the Git hosting site <a href="https://github.com/">GitHub</a>, and the static website hosting service <a href="https://pages.github.com/">GitHub Pages</a> have made it easy to share not only source code but also static HTML files (i.e. no need to purchase a domain name, setup a server, etc).</p>
 <p>My first attempt at sharing a reproducible project online was <a href="https://jdblischak.github.io/singleCellSeq/analysis/">singleCellSeq</a>. Basically, I started by copying the documentation website of <a href="http://rmarkdown.rstudio.com/">rmarkdown</a> and added some customizations to organize the generated figures and to insert the status of the Git repository directly into the HTML pages. The workflowr R package is my attempt to simplify my previous workflow and provide helper functions so that any researcher can take advantage of this workflow.</p>
-<p>Workflowr encompasses multiple functions: 1) provides a project template, 2) version controls the R Markdown and HTML files, and 3) builds a website. Furthermore, it provides R functions to perform each of these steps. There are many other related works that provide similar functionality. Some are templates to be copied, some are R packages, and some involve more complex software (e.g. static blog software). Depending on your use case, one of the related works listed at <a href="https://github.com/jdblischak/r-project-workflows#readme">r-project-workflows</a> may better suit your needs. Please check them out!</p>
+<p>Workflowr encompasses multiple functions: 1) provides a project template, 2) version controls the R Markdown and HTML files, and 3) builds a website. Furthermore, it provides R functions to perform each of these steps. There are many other related works that provide similar functionality. Some are templates to be copied, some are R packages, and some involve more complex software ( e.g. static blog software). Depending on your use case, one of the related works listed at <a href="https://github.com/jdblischak/r-project-workflows#readme">r-project-workflows</a> may better suit your needs. Please check them out!</p>
 </div>
 <div id="further-reading" class="section level2">
 <h2 class="hasAnchor">
@@ -136,6 +138,7 @@
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+
         <div id="tocnav">
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
@@ -152,17 +155,20 @@
 </div>
 
 
+
       <footer><div class="copyright">
   <p>Developed by John Blischak, Peter Carbonetto, Matthew Stephens.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
 </div>
 
   
+
 
   </body>
 </html>

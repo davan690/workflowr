@@ -103,7 +103,7 @@ check_staged_changes <- function(path, custom_message = "this function") {
   } else {
     # Format files
     files_staged <- as.character(git_status$staged)
-    files_staged <- file.path(git2r_workdir(r), files_staged)
+    files_staged <- file.path(git2r::workdir(r), files_staged)
     files_staged <- relative(files_staged)
     files_staged <- utils::capture.output(dput(files_staged))
     stop(wrap(
@@ -117,27 +117,55 @@ check_staged_changes <- function(path, custom_message = "this function") {
 
 # Obtain all the committed files in a Git repository at a given commit.
 #
+# repo - a git_repository object
+#
+# commit - NULL (default) or a git_commit object
+#
+# sysgit - character (default: `Sys.which("git")`) Path to system Git executable
+#          used to obtain committed files via `git ls-files`. Cannot be used
+#          with commit argument. To disable, set `git = ""`.
+#
 # The default is to use the head commit.
 #
 # Returns absolute paths.
-get_committed_files <- function(repo, commit = NULL) {
+get_committed_files <- function(repo, commit = NULL,
+                                sysgit = getOption("workflowr.sysgit", default = "")) {
+  stopifnot(inherits(repo, "git_repository"))
+  stopifnot(is.null(commit) || inherits(commit, "git_commit"))
+
   n_commits <- length(git2r::commits(repo))
   if (n_commits == 0) {
     return(NA)
   }
-  if (is.null(commit)) {
-    commit <- git2r::lookup(repo, git2r::branch_target(git2r_head(repo)))
+
+  # If Git is available and don't need a specific commit, use `git ls-files`
+  if (!is.null(sysgit) && !is.na(sysgit) && nchar(sysgit) > 0 && is.null(commit)) {
+    cmd <- sprintf("%s -C %s ls-files", shQuote(sysgit),
+                   shQuote(git2r::workdir(repo)))
+    suppressWarnings(files <- system(cmd, intern = TRUE, ignore.stderr = TRUE))
+    # Using Git is supposed to be a convenient speed increase. If it fails for
+    # any reason (a failure adds an attribute "status"), just continue and use
+    # git2r/libgit2.
+    if (is.null(attr(files, which = "status", exact = TRUE))) {
+      files <- absolute(file.path(git2r::workdir(repo), files))
+      return(files)
+    }
   }
+
+  if (is.null(commit)) {
+    commit <- git2r::lookup(repo, git2r::branch_target(git2r::repository_head(repo)))
+  }
+
   tree <- git2r::tree(commit)
   files <- ls_files(tree)
-  files <- absolute(file.path(git2r_workdir(repo), files))
+  files <- absolute(file.path(git2r::workdir(repo), files))
   return(files)
 }
 
 # List all files in a given "git_tree" object.
 ls_files <- function (tree) {
-  tree_list <- git2r_as.list(tree)
-  tree_df <-git2r_as.data.frame(tree)
+  tree_list <- as.list(tree)
+  tree_df <- as.data.frame(tree)
   names(tree_list) <- tree_df$name
   files <- tree_df$name[tree_df$type == "blob"]
   dirs <- tree_df$name[tree_df$type == "tree"]
@@ -157,38 +185,56 @@ ls_files <- function (tree) {
 # repo: git_repository object
 # files: character vector of filenames
 # outdir: directory with website files
-get_outdated_files <- function(repo, files, outdir = NULL) {
+# sysgit: path to system Git executable to run `git log -n 1` to obtain time of
+# last commit
+get_outdated_files <- function(repo, files, outdir = NULL,
+                                sysgit = getOption("workflowr.sysgit", default = "")) {
   if (length(files) == 0) return(files)
+  stopifnot(inherits(repo, "git_repository"))
 
   ext <- tools::file_ext(files)
   if (!all(grepl("[Rr]md", ext)))
     stop("Only R Markdown files are accepted.")
   # Corresponding HTML files
   html <- to_html(files, outdir = outdir)
-  # Remove preceding path if necessary. Has to be relative to .git directory.
-  path_to_git <- paste0(git2r_workdir(repo), "/")
-  files <- stringr::str_replace(files, path_to_git, "")
-  html <- stringr::str_replace(html, path_to_git, "")
   # For each source file, determine if it has been committed more recently than
   # its corresponding HTML
   out_of_date <- logical(length = length(files))
 
-  blobs <- git2r::odb_blobs(repo)
-  blobs$fname <- ifelse(blobs$path == "", blobs$name,
-                        file.path(blobs$path, blobs$name))
+  # If Git is available, use it to run `git log -n 1`
+  if (!is.null(sysgit) && !is.na(sysgit) && nchar(sysgit) > 0) {
+    last_commit_time <- last_commit_time_sysgit
+  } else {
+    last_commit_time <- last_commit_time_git2r
+  }
 
   for (i in seq_along(files)) {
-    # Most recent commit time of source and HTML files
-    recent_source <- max(blobs$when[blobs$fname == files[i]])
-    recent_html <- max(blobs$when[blobs$fname == html[i]])
-    if (recent_source >= recent_html) {
+    recent_source_time <- last_commit_time(repo, files[i], sysgit = sysgit)
+    recent_html_time <- last_commit_time(repo, html[i], sysgit = sysgit)
+    if (recent_source_time >= recent_html_time) {
       out_of_date[i] <- TRUE
     }
   }
   outdated <- files[out_of_date]
-  # Prepend path to Git repository
-  outdated <- file.path(path_to_git, outdated)
   return(outdated)
+}
+
+last_commit_time_git2r <- function(repo, fname, ...) {
+  last_commit <- git2r::commits(repo, n = 1, path = fname)[[1]]
+  last_commit_time <- last_commit$author$when$time
+  return(last_commit_time)
+}
+
+last_commit_time_sysgit <- function(repo, fname, sysgit, ...) {
+  cmd <- sprintf("%s -C %s log -n 1 --date=raw --format=%%ad -- %s",
+                 shQuote(sysgit), shQuote(git2r::workdir(repo)), shQuote(fname))
+  raw_git <- suppressWarnings(system(cmd, intern = TRUE, ignore.stderr = TRUE))
+  # If it fails for any reason, fall back on git2r
+  if (!is.null(attr(raw_git, which = "status", exact = TRUE))) {
+    return(last_commit_time_git2r(repo, fname))
+  }
+  unix_git <- stringr::str_split(raw_git, "\\s")[[1]][1]
+  return(as.numeric(unix_git))
 }
 
 # Obtain the files updated in a commit
@@ -208,8 +254,8 @@ get_outdated_files <- function(repo, files, outdir = NULL) {
 #
 # Returns absolute paths.
 obtain_files_in_commit <- function(repo, commit) {
-  stopifnot(class(repo) == "git_repository",
-            class(commit) == "git_commit")
+  stopifnot(inherits(repo, "git_repository"),
+            inherits(commit, "git_commit"))
   parent_commit <- git2r::parents(commit)
 
   # 3 possibilities:
@@ -220,16 +266,16 @@ obtain_files_in_commit <- function(repo, commit) {
   if (length(parent_commit) == 0) {
     files <- obtain_files_in_commit_root(repo, commit)
   } else if (length(parent_commit) == 1) {
-    git_diff <- git2r_diff(git2r::tree(commit),
+    git_diff <- base::diff(git2r::tree(commit),
                             git2r::tree(parent_commit[[1]]))
-    files <- sapply(git2r_slot(git_diff, "files"),
-                    function(x) git2r_slot(x, "new_file"))
+    files <- sapply(git_diff$files,
+                    function(x) x$new_file)
   } else {
     stop(sprintf("Cannot perform diff on commit %s because it has %d parents",
-                 git2r_slot(commit, "sha"), length(parent_commit)))
+                 commit$sha, length(parent_commit)))
   }
 
-  files <- absolute(file.path(git2r_workdir(repo), files))
+  files <- absolute(file.path(git2r::workdir(repo), files))
   return(files)
 }
 
@@ -247,10 +293,10 @@ obtain_files_in_commit <- function(repo, commit) {
 # Returns paths relative to Git root directory.
 obtain_files_in_commit_root <- function(repo, commit) {
   # Obtain the files in the root commit of a Git repository
-  stopifnot(class(repo) ==  "git_repository",
-            class(commit) == "git_commit",
+  stopifnot(inherits(repo, "git_repository"),
+            inherits(commit, "git_commit"),
             length(git2r::parents(commit)) == 0)
-  entries <- git2r_as.data.frame(git2r::tree(commit))
+  entries <- as.data.frame(git2r::tree(commit))
   files <- character()
   while (nrow(entries) > 0) {
     if (entries$type[1] == "blob") {
@@ -265,7 +311,7 @@ obtain_files_in_commit_root <- function(repo, commit) {
       #  - add the subdirectory to the name so that path is correct
       #  - remove the entry from beginning and add new entries to end of
       #    data.frame
-      new_tree_df <- git2r_as.data.frame(git2r::lookup(repo, entries$sha[1]))
+      new_tree_df <- as.data.frame(git2r::lookup(repo, entries$sha[1]))
       new_tree_df$name <- file.path(entries$name[1], new_tree_df$name)
       entries <- rbind(entries[-1, ], new_tree_df)
     } else {
@@ -292,37 +338,25 @@ check_branch <- function(git_head) {
 
 # Check remote repository.
 #
-# If there are no remotes available, confirm that the remote provided is a URL.
+# If there are no remotes available, throw an error.
 #
 # If a remote is specified, confirm it exists.
 #
 # remote - character vector or NULL
 # remote_avail - a named character vector of remote URLs
 check_remote <- function(remote, remote_avail) {
+
   if (!(is.null(remote) || is.character(remote)))
     stop("remote must be NULL or character vector")
+
   if (!is.character(remote_avail))
     stop("remote_avail must be a character vector")
 
-  # Fail early if no remotes (and the remote argument isn't a URL)
+  # If there are no remotes available, throw an error.
   if (length(remote_avail) == 0) {
-    if (is.null(remote)) {
-      m <-
-        "No remote repositories are available. Run ?wflow_git_remote to learn how
-        to configure this."
-      stop(wrap(m), call. = FALSE)
-    } else if (any(stringr::str_detect(remote, c("https", "git@")))) {
-      m <-
-        "Instead of specifying the URL to the remote repository, you can save
-        it as a remote. Run ?wflow_git_remote for details."
-      warning(wrap(m), call. = FALSE)
-      return()
-    } else {
-      m <-
-        "You have specifed a remote, but this remote repository has no remotes
-        set. Run ?wflow_git_remote to learn how to configure this."
-      stop(wrap(m), call. = FALSE)
-    }
+    m <- "No remote repositories are available. Run ?wflow_git_remote to learn
+          how to configure this."
+    stop(wrap(m), call. = FALSE)
   }
 
   # Fail early if remote is specified but doesn't exist
@@ -343,14 +377,14 @@ check_remote <- function(remote, remote_avail) {
 #
 # Returns a list of length two.
 determine_remote_and_branch <- function(repo, remote, branch) {
-  stopifnot(class(repo) == "git_repository")
-  git_head <- git2r_head(repo)
+  stopifnot(inherits(repo, "git_repository"))
+  git_head <- git2r::repository_head(repo)
   tracking <- git2r::branch_get_upstream(git_head)
   # If both remote and branch are NULL and the current branch is tracking a
   # remote branch, use this remote and branch.
   if (is.null(remote) && is.null(branch) && !is.null(tracking)) {
     remote <- git2r::branch_remote_name(tracking)
-    branch <- stringr::str_split_fixed(git2r_slot(tracking, "name"),
+    branch <- stringr::str_split_fixed(tracking$name,
                                        "/", n = 2)[, 2]
   }
   # If remote is NULL, take an educated guess at what the user would want.
@@ -359,7 +393,7 @@ determine_remote_and_branch <- function(repo, remote, branch) {
   }
   # If branch is NULL, use the same name as the current branch.
   if (is.null(branch)) {
-    branch <- git2r_slot(git_head, "name")
+    branch <- git_head$name
   }
 
   return(list(remote = remote, branch = branch))
@@ -372,7 +406,7 @@ determine_remote_and_branch <- function(repo, remote, branch) {
 # 2. If there are multiple remotes available and one is called "origin", use it.
 # 3. If there are multiple remotes available and none is "origin", throw error.
 guess_remote <- function(repo) {
-  stopifnot(class(repo) == "git_repository")
+  stopifnot(inherits(repo, "git_repository"))
   remotes <- git2r::remotes(repo)
 
   if (length(remotes) == 1) {
@@ -405,28 +439,26 @@ warn_branch_mismatch <- function(remote_branch, local_branch) {
   }
 }
 
-# Authenticate with Git using either HTTPS or SSH
+# Determine if using HTTPS or SSH protocol
 #
-# remote - the name or URL of a remote repository
+# remote - the name or URL of a remote repository. Note: The upstream function
+# wflow_git_push()/pull() no longer accept direct URLs to a remote repository.
+# However, I'm leaving this functionality in this function since it doesn't hurt
+# anything and could be potentially useful in the future.
+#
 # remote_avail - a named character vector of remote URLs
-# username - username or NULL
-# password - password or NULL
-# dry_run - logical
-authenticate_git <- function(remote, remote_avail, username = NULL,
-                             password = NULL, dry_run = FALSE) {
+#
+# Return either "https" or "ssh"
+get_remote_protocol <- function(remote, remote_avail) {
   if (!(is.character(remote) && is.character(remote_avail)))
     stop("remote and remote_avail must be character vectors")
-  if (!(is.null(username) || (is.character(username) && length(username) == 1)))
-    stop("username must be NULL or a one-element character vector")
-  if (!(is.null(password) || (is.character(password) && length(password) == 1)))
-    stop("password must be NULL or a one-element character vector")
 
-  # Determine if using HTTPS or SSH protocol
   if (remote %in% names(remote_avail)) {
     url <- remote_avail[remote]
   } else {
     url <- remote
   }
+
   if (stringr::str_sub(url, 1, 5) == "https") {
     protocol <- "https"
   } else if (stringr::str_sub(url, 1, 4) == "git@") {
@@ -440,10 +472,32 @@ authenticate_git <- function(remote, remote_avail, username = NULL,
     stop(wrap(m), call. = FALSE)
   }
 
+  return(protocol)
+}
+
+# Authenticate with Git using either HTTPS or SSH
+#
+# protocol - either "https" or "ssh"
+# username - username or NULL
+# password - password or NULL
+# dry_run - logical
+authenticate_git <- function(protocol, username = NULL,
+                             password = NULL, dry_run = FALSE) {
+  if (!protocol %in% c("https", "ssh"))
+    stop("protocol must be either \"https\" or \"ssh\"")
+  if (!(is.null(username) || (is.character(username) && length(username) == 1)))
+    stop("username must be NULL or a one-element character vector")
+  if (!(is.null(password) || (is.character(password) && length(password) == 1)))
+    stop("password must be NULL or a one-element character vector")
+
   if (protocol == "https" && !dry_run) {
     if (is.null(username)) {
       if (interactive()) {
-        username <- readline("Please enter your username: ")
+        response <- ""
+        while (response == "") {
+          response <- readline("Please enter your username (Esc to cancel): ")
+        }
+        username <- response
       } else {
         m <-
           "No username was specified. Either include the username in the
@@ -477,4 +531,21 @@ authenticate_git <- function(remote, remote_avail, username = NULL,
     credentials <- NULL
   }
   return(credentials)
+}
+
+# Throw error if Git repository is locked
+check_git_lock <- function(r) {
+  stopifnot(inherits(r, "git_repository"))
+
+  index_lock <- file.path(git2r::workdir(r), ".git/index.lock")
+  if (fs::file_exists(index_lock)) {
+    stop(call. = FALSE, wrap(
+      "The Git repository is locked. This can happen if a Git command
+      previously crashed or if multiple Git commands were executed at the same
+      time. To fix this, you need to delete the file .git/index.lock. You can
+      do this by running the following in the R console:"),
+      "\n\n",
+      glue::glue("file.remove(\"{index_lock}\")")
+    )
+  }
 }

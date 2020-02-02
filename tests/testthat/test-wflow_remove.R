@@ -2,6 +2,10 @@ context("wflow_remove")
 
 # Setup ------------------------------------------------------------------------
 
+source("setup.R")
+
+skip_on_cran_windows()
+
 library("git2r")
 
 # Load helper function local_no_gitconfig()
@@ -104,9 +108,9 @@ test_that("wflow_remove removes a published Rmd file and its associated files", 
   expect_output(print(actual), data_published)
   # Confirm a commit was made
   commit_latest <- commits(r)[[1]]
-  expect_identical(git2r_slot(actual$commit, "sha"),
-                   git2r_slot(commit_latest, "sha"))
-  expect_identical(git2r_slot(commit_latest, "message"),
+  expect_identical(actual$commit$sha,
+                   commit_latest$sha)
+  expect_identical(commit_latest$message,
                    "wflow_remove(c(rmd_published, data_published))")
   # Confirm the files were removed from the Git directory
   files_committed <- workflowr:::get_committed_files(r)
@@ -231,13 +235,13 @@ test_that("wflow_remove can remove figure file from docs/", {
 
 test_that("wflow_remove requires valid argument: files", {
   expect_error(wflow_remove(1),
-               "files must be a character vector of filenames")
+               "character vector")
   expect_error(wflow_remove(NA),
-               "files must be a character vector of filenames")
+               "character vector")
   expect_error(wflow_remove(NULL),
-               "files must be a character vector of filenames")
+               "not NULL")
   expect_error(wflow_remove(TRUE),
-               "files must be a character vector of filenames")
+               "character vector")
   expect_error(wflow_remove("nonexistent.Rmd"),
                "Not all files exist. Check the paths to the files")
 })
@@ -253,48 +257,46 @@ test_that("wflow_remove requires valid argument: message", {
 
 test_that("wflow_remove requires valid argument: git", {
   expect_error(wflow_remove("analysis/index.Rmd", git = 1, dry_run = TRUE),
-               "git must be a one-element logical vector")
-  # R intercepts NA error at beginning of function call
+               "logical vector")
   expect_error(wflow_remove("analysis/index.Rmd", git = NA, dry_run = TRUE),
-               "missing value where TRUE/FALSE needed")
+               "not NA")
   expect_error(wflow_remove("analysis/index.Rmd", git = NULL, dry_run = TRUE),
-               "git must be a one-element logical vector")
+               "not NULL")
   expect_error(wflow_remove("analysis/index.Rmd", git = "TRUE", dry_run = TRUE),
-               "git must be a one-element logical vector")
+               "logical vector")
   expect_error(wflow_remove("analysis/index.Rmd", git = c(TRUE, TRUE),
                             dry_run = TRUE),
-               "git must be a one-element logical vector")
+               "vector with length equal to 1")
 })
 
 test_that("wflow_remove requires valid argument: dry_run", {
   expect_error(wflow_remove("analysis/index.Rmd", dry_run = 1),
-               "dry_run must be a one-element logical vector")
-  # R intercepts NA error at beginning of function call
+               "logical vector")
   expect_error(wflow_remove("analysis/index.Rmd", dry_run = NA),
-               "missing value where TRUE/FALSE needed")
+               "not NA")
   expect_error(wflow_remove("analysis/index.Rmd", dry_run = NULL),
-               "dry_run must be a one-element logical vector")
+               "not NULL")
   expect_error(wflow_remove("analysis/index.Rmd", dry_run = "TRUE"),
-               "dry_run must be a one-element logical vector")
+               "logical vector")
   expect_error(wflow_remove("analysis/index.Rmd", dry_run = c(TRUE, TRUE)),
-               "dry_run must be a one-element logical vector")
+               "vector with length equal to 1")
 })
 
 test_that("wflow_remove requires valid argument: project", {
   expect_error(wflow_remove("analysis/index.Rmd", project = 1, dry_run = TRUE),
-               "project must be a one-element character vector")
+               "character vector")
   expect_error(wflow_remove("analysis/index.Rmd", project = NA, dry_run = TRUE),
-               "project must be a one-element character vector")
+               "not NA")
   expect_error(wflow_remove("analysis/index.Rmd", project = NULL, dry_run = TRUE),
-               "project must be a one-element character vector")
+               "not NULL")
   expect_error(wflow_remove("analysis/index.Rmd", project = TRUE, dry_run = TRUE),
-               "project must be a one-element character vector")
+               "character vector")
   expect_error(wflow_remove("analysis/index.Rmd", project = c("a", "b"),
                             dry_run = TRUE),
-               "project must be a one-element character vector")
+               "vector with length equal to 1")
   expect_error(wflow_remove("analysis/index.Rmd", project = "nonexistent/",
                             dry_run = TRUE),
-               "project directory does not exist.")
+               "directory")
 })
 
 test_that("wflow_remove throws an error if user.name and user.email are not set", {

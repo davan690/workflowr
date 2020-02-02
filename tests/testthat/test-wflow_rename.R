@@ -2,6 +2,10 @@ context("wflow_rename")
 
 # Setup ------------------------------------------------------------------------
 
+source("setup.R")
+
+skip_on_cran_windows()
+
 library("git2r")
 
 cwd <- getwd()
@@ -25,8 +29,8 @@ test_that("wflow_rename can rename one file", {
   expect_true(fs::file_exists(new))
   expect_identical(renamed$files_git, c(original, new))
   last_commit <- commits(r, n = 1)[[1]]
-  last_commit_mes <- workflowr:::git2r_slot(last_commit, "message")
-  last_commit_sha <- workflowr:::git2r_slot(last_commit, "sha")
+  last_commit_mes <- last_commit$message
+  last_commit_sha <- last_commit$sha
   expect_identical(last_commit_mes, "Rename file")
   # Test print method
   expect_output(print(renamed), sprintf("%s -> %s", original, new))
@@ -39,8 +43,8 @@ test_that("wflow_rename can rename one file", {
   expect_false(fs::file_exists(new))
   expect_identical(undo$files_git, c(new, original))
   last_commit <- commits(r, n = 1)[[1]]
-  last_commit_mes <- workflowr:::git2r_slot(last_commit, "message")
-  last_commit_sha <- workflowr:::git2r_slot(last_commit, "sha")
+  last_commit_mes <- last_commit$message
+  last_commit_sha <- last_commit$sha
   expect_identical(last_commit_mes, "Revert to original name")
   # Test print method
   expect_output(print(undo), sprintf("%s -> %s", new, original))

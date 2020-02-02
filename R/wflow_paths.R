@@ -25,7 +25,7 @@ wflow_paths <- function(error_git = FALSE, project = ".") {
   project <- absolute(project)
   o$root <- try(rprojroot::find_rstudio_root_file(path = project),
                 silent = TRUE)
-  if (class(o$root) == "try-error")
+  if (inherits(o$root, "try-error"))
     stop(wrap(
       "Unable to detect a workflowr project. This could be due to one of the
       following reasons:
@@ -54,6 +54,15 @@ wflow_paths <- function(error_git = FALSE, project = ".") {
     o$analysis <- dirname(site_file)
   }
 
+  # rmarkdown website requires index.Rmd file
+  index <- file.path(o$analysis, "index.Rmd")
+  if (!fs::file_exists(index)) {
+    stop(wrap(glue::glue(
+      "Invalid workflowr project. R Markdown websites require an index.Rmd
+      file. Unable to locate expected file: {index}")),
+    call. = FALSE)
+  }
+
   # docs/ directory
   output_dir <- yaml::yaml.load_file(site_file)$output_dir
   if (is.null(output_dir))
@@ -64,7 +73,7 @@ wflow_paths <- function(error_git = FALSE, project = ".") {
 
   # Git repository
   r <- try(git2r::repository(o$root, discover = TRUE), silent = TRUE)
-  if (class(r) == "try-error") {
+  if (inherits(r, "try-error")) {
     if (error_git) {
       stop(wrap("A Git repository is required for this functionality."),
            call. = FALSE)
@@ -72,7 +81,7 @@ wflow_paths <- function(error_git = FALSE, project = ".") {
       o$git <- NA_character_
     }
   } else {
-    o$git <- absolute(git2r_workdir(r))
+    o$git <- absolute(git2r::workdir(r))
   }
 
   # Make paths relative to working directory

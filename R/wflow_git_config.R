@@ -2,7 +2,7 @@
 #'
 #' \code{wflow_git_config} configures the global Git settings on the current
 #' machine. This is a convenience function to run Git commands from the R
-#' console instead of the Terminal. The same functionality can be acheived by
+#' console instead of the Terminal. The same functionality can be achieved by
 #' running \code{git config} in the Terminal.
 #'
 #' The main purpose of \code{wflow_git_config} is to set the user.name and
@@ -33,6 +33,9 @@
 #'   email when committing (i.e. saving) changes. If you have never used Git
 #'   before on your computer, make sure to set this.
 #'
+#' @param overwrite logical (default: FALSE). Overwrite existing Git global
+#'   settings.
+#'
 #' @param ... Arbitrary Git settings, e.g. \code{core.editor = "nano"}.
 #'
 #' @return An object of class \code{wflow_git_config}, which is a list with the
@@ -61,15 +64,22 @@
 #' }
 #'
 #' @export
-wflow_git_config <- function(user.name = NULL, user.email = NULL, ...) {
+wflow_git_config <- function(user.name = NULL, user.email = NULL, ...,
+                             overwrite = FALSE) {
 
   # Check input arguments ------------------------------------------------------
 
-  if (!(is.null(user.name) || (is.character(user.name) && length(user.name) == 1)))
-    stop("user.name must be NULL or a one-element character vector")
+  if (!is.null(user.name)) {
+    assert_is_character(user.name)
+    assert_has_length(user.name, 1)
+  }
 
-  if (!(is.null(user.email) || (is.character(user.email) && length(user.email) == 1)))
-    stop("user.email must be NULL or a one-element character vector")
+  if (!is.null(user.email)) {
+    assert_is_character(user.email)
+    assert_has_length(user.email, 1)
+  }
+
+  assert_is_flag(overwrite)
 
   # Create .gitconfig on Windows -----------------------------------------------
 
@@ -88,6 +98,24 @@ wflow_git_config <- function(user.name = NULL, user.email = NULL, ...) {
       if (!fs::file_exists(config_file)) {
         fs::file_create(config_file)
       }
+    }
+  }
+
+  # Check for existing settings ------------------------------------------------
+
+  existing <- git2r::config(global = TRUE)$global
+  variables_to_set <- c(user.name = user.name, user.email = user.email, list(...))
+  to_be_overwritten <- intersect(names(existing), names(variables_to_set))
+  if (length(to_be_overwritten) > 0) {
+    message("Current settings:")
+    for (var in to_be_overwritten) {
+      message(glue::glue("  {var}: {existing[[var]]}"))
+    }
+    if (overwrite) {
+      message("The settings above will be overwritten.")
+    } else {
+      stop("Some settings already exist. Set overwrite=TRUE to overwrite them.",
+           call. = FALSE)
     }
   }
 

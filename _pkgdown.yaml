@@ -32,6 +32,8 @@ articles:
     - "`wflow-06-gitlab`"
     - "`wflow-07-common-code`"
     - "`wflow-08-deploy`"
+    - "`wflow-09-workshop`"
+    - "`wflow-10-data`"
 
 reference:
   - title: "Main functions"
@@ -55,8 +57,12 @@ reference:
     contents:
       - wflow_html
       - wflow_open
+      - wflow_quickstart
       - wflow_remove
       - wflow_rename
+      - wflow_rename_proj
+      - wflow_run
       - wflow_site
+      - wflow_toc
       - wflow_update
       - wflow_view

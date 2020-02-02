@@ -2,6 +2,10 @@ context("wflow_status")
 
 # Setup ------------------------------------------------------------------------
 
+source("setup.R")
+
+skip_on_cran_windows()
+
 # Setup workflowr project for testing
 site_dir <- tempfile("test-wflow_status-")
 suppressMessages(wflow_start(site_dir, change_wd = FALSE, user.name = "Test Name",
@@ -9,6 +13,9 @@ suppressMessages(wflow_start(site_dir, change_wd = FALSE, user.name = "Test Name
 site_dir <- workflowr:::relative(site_dir)
 # Cleanup
 on.exit(unlink(site_dir, recursive = TRUE, force = TRUE))
+
+# Note: Only a few tests in this file use the modern setup
+source("setup.R")
 
 # Test wflow_status ------------------------------------------------------------
 
@@ -188,6 +195,57 @@ test_that("wflow_status detects files with extension .rmd", {
   expect_identical(rownames(s_rmd$status), lowercase)
 })
 
+test_that("wflow_status detects uncommitted changes in configuration files", {
+  s_config <- wflow_status(project = site_dir)
+  expect_false(s_config$site_yml)
+  expect_false(s_config$wflow_yml)
+
+  site_yml_path <- file.path(s$analysis, "_site.yml")
+  site_yml_tmp <- fs::file_temp()
+  fs::file_copy(site_yml_path, site_yml_tmp)
+  on.exit(fs::file_move(site_yml_tmp, site_yml_path))
+  site_yml <- yaml::yaml.load_file(site_yml_path)
+  site_yml$key <- "value"
+  yaml::write_yaml(site_yml, file = site_yml_path)
+
+  s_config <- wflow_status(project = site_dir)
+  expect_true(s_config$site_yml)
+  expect_false(s_config$wflow_yml)
+
+  wflow_yml_path <- file.path(s$root, "_workflowr.yml")
+  wflow_yml_tmp <- fs::file_temp()
+  fs::file_copy(wflow_yml_path, wflow_yml_tmp)
+  on.exit(fs::file_move(wflow_yml_tmp, wflow_yml_path), add = TRUE)
+  wflow_yml <- yaml::yaml.load_file(wflow_yml_path)
+  wflow_yml$key <- "value"
+  yaml::write_yaml(wflow_yml, file = wflow_yml_path)
+
+  s_config <- wflow_status(project = site_dir)
+  expect_true(s_config$site_yml)
+  expect_true(s_config$wflow_yml)
+
+  fs::file_delete(wflow_yml_path)
+
+  s_config <- wflow_status(project = site_dir)
+  expect_true(s_config$site_yml)
+  expect_true(s_config$wflow_yml) # still true because "deleted" in git status
+})
+
+test_that("wflow_status works if HTML file of published Rmd is deleted", {
+
+  skip_on_cran()
+
+  html_pub <- workflowr:::to_html(rmd_pub, outdir = s$docs)
+  html_pub_tmp <- fs::file_temp(ext = "Rmd")
+  fs::file_move(html_pub, html_pub_tmp)
+  on.exit(fs::file_move(html_pub_tmp, html_pub))
+
+  expect_silent(
+    status <- wflow_status(files = rmd_pub, project = site_dir)
+  )
+  expect_true(status$status$published)
+})
+
 # Warnings and Errors ----------------------------------------------------------
 
 test_that("wflow_status throws error if not in workflowr project.", {
@@ -219,6 +277,15 @@ test_that("wflow_status throws error if no _site.yml file.", {
                "Unable to find the file _site.yml in the analysis directory.")
 })
 
+test_that("wflow_status throws error if no index.Rmd file.", {
+  index_original <- file.path(site_dir, "analysis/index.Rmd")
+  index_replace <-  file.path(site_dir, "analysis/other.Rmd")
+  on.exit(file.rename(index_replace, index_original))
+  file.rename(index_original, index_replace)
+  expect_error(s <- wflow_status(project = site_dir),
+               "Invalid workflowr project")
+})
+
 test_that("wflow_status throws error if no Git repository.", {
   git_original <- file.path(site_dir, ".git")
   git_replace <-  file.path(site_dir, ".git2")
@@ -239,7 +306,86 @@ test_that("wflow_status throws error if given directory input.", {
 test_that("wflow_status throws error if given non-[Rr]md extension.", {
   readme <- file.path(site_dir, "README.md")
   expect_error(wflow_status(readme, project = site_dir),
-               "File extensions must be either Rmd or rmd.")
+               "Only files with extension Rmd or rmd")
+})
+
+test_that("wflow_status gives warning for HTML-only published files", {
+
+  # Setup functions from setup.R
+  path <- test_setup()
+  on.exit(test_teardown(path))
+
+  rmd <- file.path(path, "analysis", "test.Rmd")
+  fs::file_create(rmd)
+  html <- file.path(path, "docs", "test.html")
+  fs::file_create(html)
+
+  r <- git2r::repository(path)
+  git2r::add(r, html)
+  git2r::commit(r, "Commit HTML only")
+  expect_warning(
+    wflow_status(project = path),
+    workflowr:::relative(rmd)
+  )
+})
+
+test_that("wflow_status fails early if deleted subdirectory is current working directory", {
+
+  if (.Platform$OS.type == "windows")
+    skip("Current working directory cannot be deleted on Windows")
+
+  # Setup functions from setup.R
+  path <- test_setup()
+  on.exit(test_teardown(path))
+
+  cwd <- fs::path_wd()
+  on.exit(setwd(cwd), add = TRUE)
+
+  subdir <- file.path(path, "sub")
+  fs::dir_create(subdir)
+  setwd(subdir)
+  expect_silent(s <- wflow_status())
+  fs::dir_delete(subdir)
+  expect_error(wflow_status(), "The current working directory doesn't exist.")
+})
+
+test_that("wflow_status fails early if deleted root directory is current working directory", {
+
+  if (.Platform$OS.type == "windows")
+    skip("Current working directory cannot be deleted on Windows")
+
+  # Setup functions from setup.R
+  path <- test_setup()
+  on.exit(test_teardown(path))
+
+  cwd <- fs::path_wd()
+  on.exit(setwd(cwd), add = TRUE)
+
+  setwd(path)
+  expect_silent(s <- wflow_status())
+  fs::dir_delete(path)
+  expect_error(wflow_status(), "The current working directory doesn't exist.")
+})
+
+test_that("wflow_status fails early if deleted external directory is current working directory", {
+
+  if (.Platform$OS.type == "windows")
+    skip("Current working directory cannot be deleted on Windows")
+
+  # Setup functions from setup.R
+  path <- test_setup()
+  on.exit(test_teardown(path))
+
+  cwd <- fs::path_wd()
+  on.exit(setwd(cwd), add = TRUE)
+
+  extdir <- fs::file_temp()
+  on.exit(if (fs::dir_exists(extdir)) fs::dir_delete(extdir), add = TRUE)
+  fs::dir_create(extdir)
+  setwd(extdir)
+  expect_silent(s <- wflow_status(project = path))
+  fs::dir_delete(extdir)
+  expect_error(wflow_status(project = path), "The current working directory doesn't exist.")
 })
 
 # Test wflow_paths -------------------------------------------------------------
@@ -289,4 +435,66 @@ test_that("wflow_paths does *not* throw warning if docs/ directory is missing", 
   on.exit(file.rename(docs_tmp, docs))
   file.rename(docs, docs_tmp)
   expect_silent(wflow_paths(project = site_dir))
+})
+
+# Test print.wflow_status ------------------------------------------------------
+
+test_that("wflow_status includes Git status by default", {
+
+  # Setup functions from setup.R
+  path <- test_setup()
+  on.exit(test_teardown(path))
+
+  status <- wflow_status(project = path)
+  status_print <- utils::capture.output(print(status))
+  expect_true("The current Git status is: working directory clean" %in% status_print)
+
+  # modify a file in docs/. Status should not change
+  fs::file_create(file.path(status$docs, "generated.txt"))
+
+  status <- wflow_status(project = path)
+  status_print <- utils::capture.output(print(status))
+  expect_true("The current Git status is: working directory clean" %in% status_print)
+
+  # Add a file in analysis/. Status should be untracked
+  rmd <- file.path(status$analysis, "new.Rmd")
+  fs::file_create(rmd)
+  # Edit existing file. Status should be modified
+  index <- file.path(status$analysis, "index.Rmd")
+  cat("Edit\n", file = index, append = TRUE)
+
+  status <- wflow_status(project = path)
+  status_print <- utils::capture.output(print(status))
+  expect_true("The current Git status is:" %in% status_print)
+  expect_true(sum(
+    stringr::str_detect(status_print,
+                        glue::glue("\\s+untracked\\s+untracked\\s+{rmd}"))) == 1)
+  expect_true(sum(
+    stringr::str_detect(status_print,
+                        glue::glue("\\s+unstaged\\s+modified\\s+{index}"))) == 1)
+})
+
+test_that("wflow_status can omit Git status", {
+
+  # Setup functions from setup.R
+  path <- test_setup()
+  on.exit(test_teardown(path))
+
+  status <- wflow_status(include_git_status = FALSE, project = path)
+  status_print <- utils::capture.output(print(status))
+  expect_false("The current Git status is:" %in% status_print)
+
+  # modify a file in docs/. Status should not change
+  fs::file_create(file.path(status$docs, "generated.txt"))
+
+  status <- wflow_status(include_git_status = FALSE, project = path)
+  status_print <- utils::capture.output(print(status))
+  expect_false("The current Git status is:" %in% status_print)
+
+  # modify a file in analysis/. Status should change
+  fs::file_create(file.path(status$analysis, "new.Rmd"))
+
+  status <- wflow_status(include_git_status = FALSE, project = path)
+  status_print <- utils::capture.output(print(status))
+  expect_false("The current Git status is:" %in% status_print)
 })

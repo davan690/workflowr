@@ -60,7 +60,11 @@ easily adopt workflowr.
 This tutorial assumes you have already followed the [installation
 instructions](https://jdblischak.github.io/workflowr/index.html#installation).
 Specifically, you need to have R, pandoc (or RStudio), and workflowr installed
-on your computer. Furthermore, you need a GitHub account.
+on your computer. Furthermore, you need an account on [GitHub][gh] or
+[GitLab][gl].
+
+[gh]: https://github.com
+[gl]: https://gitlab.com
 
 ## Overview
 
@@ -99,10 +103,10 @@ If you have never created a Git repository on your computer before, you need to
 run the following command to tell Git your name and email. Git uses this
 information to assign the changes you make to the code to you (analogous to how
 Track Changes in a Microsoft Office Word document assigns your changes to you).
-You do not need to use the exact same name and email as you used for your GitHub
-account. Also, you only need to run this command once per computer, and all
-subsequent workflowr projects will use this information (you can also update it
-at any time by re-running the command with different input).
+You do not need to use the exact same name and email as you used for your
+account on GitHub or GitLab. Also, you only need to run this command once per
+computer, and all subsequent workflowr projects will use this information (you
+can also update it at any time by re-running the command with different input).
 
 ```{r wflow-git-config, eval=FALSE}
 # Replace the example text with your information
@@ -316,7 +320,7 @@ wflow_publish(c("analysis/index.Rmd", "analysis/about.Rmd", "analysis/license.Rm
 * **Step 2:** Builds the HTML files using `wflow_build()`
 
 * **Step 3:** Commits the 3 HTML files plus the files that specify the style of
-the website (e.g. CSS and Javascript files)
+the website (e.g. CSS and JavaScript files)
 
 Performing these 3 steps ensures that the HTML files are always in sync with the
 latest versions of the R Markdown files. Performing these steps manually would
@@ -335,27 +339,48 @@ wflow_status()
 
 At this point you have built a version-controlled website that exists on your
 local computer. The next step is to put your code on GitHub so that it can serve
-your website online.
+your website online. If you are using GitLab, switch to the vignette [Hosting
+workflowr websites using GitLab](wflow-06-gitlab.html) and then continue with
+the next section.
 
-First, you need to configure your local project for use use with GitHub. Pass
-your GitHub username and desired repository name to the workflowr function
-`wflow_use_github()`.
+All the required setup can be performed by the workflowr function
+`wflow_use_github()`. The only required argument is your GitHub username^[The
+default is to name the GitHub repository using the same name as the directory
+that contains the workflowr project. This is likely what you used with
+`wflow_start()`, which in this case was `"myproject"`. If you'd prefer the
+GitHub repository to have a different name, or if you've already created a
+GitHub repo with a different name, you can pass the argument `repository =
+"other-name"`.]:
 
-```{r wflow-use-github}
-wflow_use_github("myname", "myproject")
+```{r wflow-use-github, eval=FALSE}
+wflow_use_github("myname")
 ```
 
-This had two main effects: 1) it configured Git to communicate with your future
-GitHub repository, and 2) it inserted a link to your future GitHub repository
-into the navigation bar (you'll need to run `wflow_build()` or `wflow_publish()`
-to observe this change).
+```{r wflow-use-github-hidden, echo=FALSE}
+# Don't want to try to authenticate on GitHub
+wflow_use_github("myname", create_on_github = FALSE)
+```
 
-Second, you need to create the GitHub repository (you can skip this step if
-you've already created it). To do this, login to your account on GitHub and
-create a new repository following these [instructions][new-repo]. The screenshot
-below shows the menu in the topright of the webpage.
+This has two main effects on your local machine: 1) it configures Git to
+communicate with your future GitHub repository, and 2) it inserts a link to your
+future GitHub repository into the navigation bar (you'll need to run
+`wflow_build()` or `wflow_publish()` to observe this change). Furthermore,
+`wflow_use_github()` will prompt you to ask if you'd like to authorize workflowr
+to automatically create the repository on GitHub. If you agree, a browser tab
+will open, and you will need to authenticate with your username and password,
+and then give permission to the "workflowr-oauth-app" to access your
+account^[This sounds scarier than it actually is. The "workflowr-oauth-app" is
+simply a formality for GitHub to grant authorization. The "app" itself is the R
+code running on your local machine. Once `wflow_use_github()` finishes, the
+authorization is deleted, and nothing (and no one) can access your account].
 
-<img src="github-new-repo.png" alt="Create a new repository on GitHub."
+If you decline the offer from `wflow_use_github()` to automatically create the
+GitHub repository, you need to manually create it. To do this, login to your
+account on GitHub and create a new repository following these
+[instructions][new-repo]. The screenshot below shows the menu in the topright of
+the webpage.
+
+<img src="img/github-new-repo.png" alt="Create a new repository on GitHub."
   style="display: block; margin: auto; border: black 1px solid">
 
 <p class="caption" style="text-align: center;">
@@ -363,12 +388,12 @@ Create a new repository on GitHub.
 </p>
 
 Note that in this tutorial the GitHub repository also has the name
-"myproject." This isn't strictly neccesary (you can name your GitHub repository
+"myproject." This isn't strictly necessary (you can name your GitHub repository
 whatever you like), but it's generally good organizational practice to use the
 same name for both your GitHub repository and the local directory on your
 computer.
 
-Third, you need to send your files to GitHub. Push your files to GitHub with the
+Next, you need to send your files to GitHub. Push your files to GitHub with the
 function `wflow_git_push()`:^[Unfortunately this can fail for many different
 reasons. If you already regularly use `git push` in the Terminal, you will
 probably want to continue using this. If you don't have Git installed on your
@@ -387,7 +412,7 @@ keys](wflow-02-customization.html#setup-ssh-keys).]. Each time you make changes
 to your project, e.g. run `wflow_publish()`, you will need to run
 `wflow_git_push()` to send the changes to GitHub.
 
-Fourth, now that your code is on GitHub, you need to tell GitHub that you want
+Lastly, now that your code is on GitHub, you need to tell GitHub that you want
 the files in `docs/` to be published as a website. Go to Settings -> GitHub
 Pages and choose "master branch docs/ folder" as the Source
 ([instructions][publish-docs]). Using the hypothetical names above, the
@@ -473,13 +498,19 @@ wflow_publish(c("analysis/index.Rmd", "analysis/first-analysis.Rmd"),
               "Add my first analysis", view = FALSE)
 ```
 
-Lastly, push the changes to GitHub with `wflow_git_push()`^[Alternatively you
-can run `git push` in the Terminal or use the RStudio Git Pane.] to deploy these
-latest changes to the website.
+Lastly, push the changes to GitHub or GitLab with
+`wflow_git_push()`^[Alternatively you can run `git push` in the Terminal or use
+the RStudio Git Pane.] to deploy these latest changes to the website.
 
 ## The workflow
 
-This is the general workflow:
+This is the general workflow:^[Note that some workflowr functions are also
+available as [RStudio Addins][rstudio-addins]. You may prefer these compared to
+running the commands in the R console, especially since you can [bind the addins
+to keyboard shortcuts][rstudio-addins-shortcuts].]
+
+[rstudio-addins]: https://rstudio.github.io/rstudioaddins/
+[rstudio-addins-shortcuts]: https://rstudio.github.io/rstudioaddins/#keyboard-shorcuts
 
 1. Open a new or existing R Markdown file in `analysis/` (optionally using
 `wflow_open()`)
@@ -497,8 +528,8 @@ appear on the website (alternatively press the Knit button in RStudio)
 files in `code/`, `data/`, and `output/`), build the HTML files, and commit the
 HTML files
 
-1. Push the changes to GitHub with `wflow_git_push()` (or `git push` in the
-Terminal)
+1. Push the changes to GitHub or GitLab with `wflow_git_push()` (or `git push`
+in the Terminal)
 
 This ensures that the code version recorded at the top of an HTML file
 corresponds to the state of the Git repository at the time it was built.

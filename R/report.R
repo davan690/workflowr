@@ -1,5 +1,8 @@
 
 create_report <- function(input, output_dir, has_code, opts) {
+  if (opts$suppress_report) {
+    return("")
+  }
 
   input <- absolute(input)
   input_dir <- dirname(input)
@@ -13,7 +16,7 @@ create_report <- function(input, output_dir, has_code, opts) {
     s <- NULL
   }
 
-  # workflowr checks -----------------------------------------------------------
+  # workflowr checks ------------------------------------------------------
   checks <- list()
 
   # Check R Markdown status
@@ -33,27 +36,30 @@ create_report <- function(input, output_dir, has_code, opts) {
 
     # Check caching
     checks$cache <- check_cache(input)
+
+    # Check for absolute paths
+    checks$paths <- check_paths(input, opts$knit_root_dir)
   }
 
   # Check version control
-  checks$result_vc <- check_vc(input, r, s, opts$github)
+  checks$result_vc <- check_vc(input, r, s, opts$github, output_dir = output_dir)
 
-  # Formatting checks ----------------------------------------------------------
+  # Formatting checks -----------------------------------------------------
 
   checks_formatted <- Map(format_check, checks)
   checks_formatted_string <- paste(unlist(checks_formatted), collapse = "\n")
   report_checks <- glue::glue('
-  <div class="panel-group" id="workflowr-checks">
-    {checks_formatted_string}
-  </div>
-  ')
+    <div class="panel-group" id="workflowr-checks">
+      {checks_formatted_string}
+    </div>
+    ')
 
   # Format `knit_root_dir` for display in report.
   knit_root_print <- opts$knit_root_dir
   # If it is part of a workflowr project, construct a path relative to the
   # directory that contains the workflowr project directory.
   p <- try(wflow_paths(error_git = FALSE, project = input_dir), silent = TRUE)
-  if (class(p) != "try-error") {
+  if (!inherits(p, "try-error")) {
     if (fs::path_has_parent(knit_root_print, absolute(p$root))) {
       knit_root_print <- fs::path_rel(knit_root_print,
                                       start = dirname(absolute(p$root)))
@@ -69,20 +75,19 @@ create_report <- function(input, output_dir, has_code, opts) {
     knit_root_print <- paste0(knit_root_print, "/")
   }
 
-  # Version history ------------------------------------------------------------
+  # Version history --------------------------------------------------------
 
   if (uses_git) {
-    blobs <- git2r::odb_blobs(r)
-    versions <- get_versions(input, output_dir, blobs, r, opts$github)
+    versions <- get_versions(input, output_dir, r, opts$github)
     report_versions <- versions
   } else {
     report_versions <-
       "<p>This project is not being versioned with Git. To obtain the full
-      reproducibility benefits of using workflowr, please see
-      <code>?wflow_start</code>.</p>"
+        reproducibility benefits of using workflowr, please see
+        <code>?wflow_start</code>.</p>"
   }
 
-  # Return ---------------------------------------------------------------------
+  # Return -----------------------------------------------------------------
 
   checks_passed <- vapply(checks, function(x) x$pass, FUN.VALUE = logical(1))
   if (all(checks_passed)) {
@@ -90,114 +95,106 @@ create_report <- function(input, output_dir, has_code, opts) {
   } else {
     symbol <- "glyphicon-exclamation-sign text-danger"
   }
-  report <- paste(report_checks, report_versions, collapse = "\n")
   report <- glue::glue('
-  <p>
-  <button type="button" class="btn btn-default btn-workflowr btn-workflowr-report"
-    data-toggle="collapse" data-target="#workflowr-report">
-    <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
-    workflowr
-    <span class="glyphicon {symbol}" aria-hidden="true"></span>
-  </button>
-  </p>
-
-  <div id="workflowr-report" class="collapse">
-  <ul class="nav nav-tabs">
-    <li class="active"><a data-toggle="tab" href="#summary">Summary</a></li>
-    <li><a data-toggle="tab" href="#report">
-    Report <span class="glyphicon {symbol}" aria-hidden="true"></span>
-    </a></li>
-    <li><a data-toggle="tab" href="#versions">Past versions</a></li>
-  </ul>
-
-  <div class="tab-content">
-  <div id="summary" class="tab-pane fade in active">
-    <p><strong>Last updated:</strong> {Sys.Date()}</p>
-    <p><strong>Checks:</strong>
-    <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
-    {sum(checks_passed)}
-    <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span>
-    {sum(!checks_passed)}
-    </p>
-    <p><strong>Knit directory:</strong>
-    <code>{knit_root_print}</code>
-    <span class="glyphicon glyphicon-question-sign" aria-hidden="true"
-    title="This is the local directory in which the code in this file was executed.">
-    </span>
-    </p>
     <p>
-    This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a>
-    analysis was created with <a
-    href="https://github.com/jdblischak/workflowr">workflowr</a> (version
-    {packageVersion("workflowr")}). The <em>Report</em> tab describes the
-    reproducibility checks that were applied when the results were created.
-    The <em>Past versions</em> tab lists the development history.
+    <button type="button" class="btn btn-default btn-workflowr btn-workflowr-report"
+      data-toggle="collapse" data-target="#workflowr-report">
+      <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+      workflowr
+      <span class="glyphicon {symbol}" aria-hidden="true"></span>
+    </button>
     </p>
-  <hr>
-  </div>
-  <div id="report" class="tab-pane fade">
-    {report_checks}
-  <hr>
-  </div>
-  <div id="versions" class="tab-pane fade">
-    {report_versions}
-  <hr>
-  </div>
-  </div>
-  </div>
-  ')
+
+    <div id="workflowr-report" class="collapse">
+    <ul class="nav nav-tabs">
+      <li class="active"><a data-toggle="tab" href="#summary">Summary</a></li>
+      <li><a data-toggle="tab" href="#checks">
+      Checks <span class="glyphicon {symbol}" aria-hidden="true"></span>
+      </a></li>
+      <li><a data-toggle="tab" href="#versions">Past versions</a></li>
+    </ul>
+
+    <div class="tab-content">
+    <div id="summary" class="tab-pane fade in active">
+      <p><strong>Last updated:</strong> {Sys.Date()}</p>
+      <p><strong>Checks:</strong>
+      <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+      {sum(checks_passed)}
+      <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span>
+      {sum(!checks_passed)}
+      </p>
+      <p><strong>Knit directory:</strong>
+      <code>{knit_root_print}</code>
+      <span class="glyphicon glyphicon-question-sign" aria-hidden="true"
+      title="This is the local directory in which the code in this file was executed.">
+      </span>
+      </p>
+      <p>
+      This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a>
+      analysis was created with <a
+      href="https://github.com/jdblischak/workflowr">workflowr</a> (version
+      {packageVersion("workflowr")}). The <em>Checks</em> tab describes the
+      reproducibility checks that were applied when the results were created.
+      The <em>Past versions</em> tab lists the development history.
+      </p>
+    <hr>
+    </div>
+    <div id="checks" class="tab-pane fade">
+      {report_checks}
+    <hr>
+    </div>
+    <div id="versions" class="tab-pane fade">
+      {report_versions}
+    <hr>
+    </div>
+    </div>
+    </div>
+    ')
 
   return(report)
 }
 
-get_versions <- function(input, output_dir, blobs, r, github) {
+get_versions <- function(input, output_dir, r, github) {
 
-  blobs$fname <- file.path(git2r_workdir(r), blobs$path, blobs$name)
-  blobs$fname <- absolute(blobs$fname)
-  blobs$ext <- tools::file_ext(blobs$fname)
+  rmd <- relative(input, start = git2r::workdir(r))
+  html <- to_html(rmd, outdir = output_dir)
+  html <- relative(html, start = git2r::workdir(r))
 
-  html <- to_html(input, outdir = output_dir)
-  blobs_file <- blobs[blobs$fname %in% c(input, html),
-                      c("ext", "commit", "author", "when")]
-  # Ignore blobs that don't map to commits (caused by `git commit --amend`)
-  git_log <- git2r::commits(r)
-  git_log_sha <- vapply(git_log, function(x) git2r_slot(x, "sha"), character(1))
-  blobs_file <- blobs_file[blobs_file$commit %in% git_log_sha, ]
+  df_versions <- get_versions_df(c(rmd, html), r)
+
   # Exit early if there are no past versions
-  if (nrow(blobs_file) == 0) {
+  if (length(df_versions) == 0) {
     text <-
       "<p>There are no past versions. Publish this analysis with
       <code>wflow_publish()</code> to start tracking its development.</p>"
     return(text)
   }
-  colnames(blobs_file) <- c("File", "Version", "Author", "Date")
-  blobs_file <- blobs_file[order(blobs_file$Date, decreasing = TRUE), ]
-  blobs_file$Date <- as.Date(blobs_file$Date)
-  blobs_file$Message <- vapply(blobs_file$Version,
-                               get_commit_title,
-                               "character(1)",
-                               r = r)
-  workdir_w_trailing_slash <- paste0(git2r_workdir(r), "/")
-  git_html <- stringr::str_replace(html, workdir_w_trailing_slash, "")
-  git_rmd <- stringr::str_replace(input, workdir_w_trailing_slash, "")
+
+  df_versions$File <- ifelse(df_versions$File == rmd, "Rmd", "html")
 
   if (is.na(github)) {
-    blobs_file$Version <- shorten_sha(blobs_file$Version)
+    df_versions$Version <- shorten_sha(df_versions$Version)
   } else {
-    blobs_file$Version <- ifelse(blobs_file$File == "html",
-                                 # HTML preview URL
-                                 create_url_html(github, git_html, blobs_file$Version),
-                                 # R Markdown URL
-                                 sprintf("<a href=\"%s/blob/%s/%s\" target=\"_blank\">%s</a>",
-                                         github, blobs_file$Version, git_rmd,
-                                         shorten_sha(blobs_file$Version)))
+    df_versions$Version <- ifelse(df_versions$File == "html",
+                                  # HTML preview URL
+                                  create_url_html(github, html, df_versions$Version),
+                                  # R Markdown URL
+                                  sprintf("<a href=\"%s/blob/%s/%s\" target=\"_blank\">%s</a>",
+                                          github, df_versions$Version, rmd,
+                                          shorten_sha(df_versions$Version)))
   }
+
+  df_versions <- df_versions[, c("File", "Version", "Author", "Date", "Message")]
 
   template <-
 "
-<p>These are the previous versions of the R Markdown and HTML files. If you've
-configured a remote Git repository (see <code>?wflow_git_remote</code>), click
-on the hyperlinks in the table below to view them.</p>
+<p>
+These are the previous versions of the repository in which changes were made
+to the R Markdown (<code>{{rmd}}</code>) and HTML (<code>{{html}}</code>)
+files. If you've configured a remote Git repository (see
+<code>?wflow_git_remote</code>), click on the hyperlinks in the table below to
+view the files as they were in that past version.
+</p>
 <div class=\"table-responsive\">
 <table class=\"table table-condensed table-hover\">
 <thead>
@@ -210,7 +207,7 @@ on the hyperlinks in the table below to view them.</p>
 </tr>
 </thead>
 <tbody>
-{{#blobs_file}}
+{{#df_versions}}
 <tr>
 <td>{{{File}}}</td>
 <td>{{{Version}}}</td>
@@ -218,12 +215,13 @@ on the hyperlinks in the table below to view them.</p>
 <td>{{Date}}</td>
 <td>{{Message}}</td>
 </tr>
-{{/blobs_file}}
+{{/df_versions}}
 </tbody>
 </table>
 </div>
 "
-  data <- list(blobs_file = unname(whisker::rowSplit(blobs_file)))
+  data <- list(rmd = rmd, html = html,
+               df_versions = unname(whisker::rowSplit(df_versions)))
   text <- whisker::whisker.render(template, data)
 
   return(text)
@@ -232,35 +230,35 @@ on the hyperlinks in the table below to view them.</p>
 # Get versions table for figures. Needs to be refactored to share code with
 # get_versions.
 get_versions_fig <- function(fig, r, github) {
-  fig <- absolute(fig)
-  blobs <- git2r::odb_blobs(r)
-  blobs$fname <- ifelse(blobs$path == "", blobs$name,
-                        file.path(blobs$path, blobs$name))
-  blobs$fname_abs <- file.path(git2r_workdir(r), blobs$fname)
-  blobs_file <- blobs[blobs$fname_abs == fig, ]
-  # Ignore blobs that don't map to commits (caused by `git commit --amend`)
-  git_log <- git2r::commits(r)
-  git_log_sha <- vapply(git_log, function(x) git2r_slot(x, "sha"), character(1))
-  blobs_file <- blobs_file[blobs_file$commit %in% git_log_sha, ]
+  fig <- relative(fig, start = git2r::workdir(r))
+
+  df_versions <- get_versions_df(fig, r)
 
   # Exit early if there are no past versions
-  if (nrow(blobs_file) == 0) {
+  if (length(df_versions) == 0) {
     return("")
   }
 
   if (is.na(github)) {
-    blobs_file$commit <- shorten_sha(blobs_file$commit)
+    df_versions$Version <- shorten_sha(df_versions$Version)
   } else {
-    blobs_file$commit <- sprintf("<a href=\"%s/blob/%s/%s\" target=\"_blank\">%s</a>",
-                                 github, blobs_file$commit,
-                                 blobs_file$fname,
-                                 shorten_sha(blobs_file$commit))
+    df_versions$Version <- sprintf("<a href=\"%s/blob/%s/%s\" target=\"_blank\">%s</a>",
+                                   github, df_versions$Version, fig,
+                                   shorten_sha(df_versions$Version))
   }
 
-  blobs_file <- blobs_file[, c("commit", "author", "when")]
-  colnames(blobs_file) <- c("Version", "Author", "Date")
-  blobs_file <- blobs_file[order(blobs_file$Date, decreasing = TRUE), ]
-  blobs_file$Date <- as.Date(blobs_file$Date)
+  df_versions <- df_versions[, c("Version", "Author", "Date")]
+
+  fig <- basename(fig)
+  id <- paste0("fig-", tools::file_path_sans_ext(basename(fig)))
+  # An HTML ID cannot contain spaces. If filename has spaces, quote the figure
+  # name and convert spaces in ID to dashes. Also insert text in case there is a
+  # similar chunk name that already uses dashes instead of spaces.
+  if (stringr::str_detect(fig, "\\s")) {
+    fig <- paste0('"', fig, '"')
+    id <- stringr::str_replace_all(id, "\\s", "-")
+    id <- stringr::str_replace(id, "fig-", "fig-no-spaces-")
+  }
 
   template <-
     "
@@ -282,40 +280,80 @@ get_versions_fig <- function(fig, r, github) {
   </tr>
   </thead>
   <tbody>
-  {{#blobs_file}}
+  {{#df_versions}}
   <tr>
   <td>{{{Version}}}</td>
   <td>{{Author}}</td>
   <td>{{Date}}</td>
   </tr>
-  {{/blobs_file}}
+  {{/df_versions}}
   </tbody>
   </table>
   </div>
   </div>
   "
-  data <- list(fig = basename(fig),
-               id = paste0("fig-", tools::file_path_sans_ext(basename(fig))),
-               blobs_file = unname(whisker::rowSplit(blobs_file)))
+  data <- list(fig = fig, id = id,
+               df_versions = unname(whisker::rowSplit(df_versions)))
   text <- whisker::whisker.render(template, data)
 
   return(text)
 
 }
 
+# Return a data frame of past versions
+#
+# files - paths relative to Git repository
+# r - git_repository
+# timezone - timezone to use, e.g. "America/New_York". Defaults to local
+#            timezone. If unset (i.e. is NULL, NA, or ""), defaults to "Etc/UTC".
+#
+# If no past versions, returns empty data frame
+get_versions_df <- function(files, r, timezone = Sys.timezone()) {
 
-get_commit_title <- function(x, r) {
-  full <- git2r_slot(git2r::lookup(r, x), "message")
-  title <- stringr::str_split(full, "\n")[[1]][1]
-  return(title)
+  if (any(fs::is_absolute_path(files)))
+    stop("File paths must be relative to Git repository at ",
+         git2r::workdir(r))
+
+  commits_path <- list()
+  for (f in files) {
+    commits_f <- git2r::commits(r, path = f)
+    names(commits_f) <- rep(f, length(commits_f))
+    commits_path <- c(commits_path, commits_f)
+  }
+
+  # Exit early if there are no past versions
+  if (length(commits_path) == 0) {
+    return(data.frame())
+  }
+
+  version <- vapply(commits_path, function(x) x$sha, character(1))
+  author <- vapply(commits_path, function(x) x$author$name, character(1))
+  date <- lapply(commits_path, function(x) as.POSIXct(x$author$when))
+  date <- do.call(c, date)
+  message <- vapply(commits_path, function(x) x$message, character(1))
+
+  # Only keep the first line of the commit message
+  message <- vapply(message, get_first_line, character(1))
+
+  df_versions <- data.frame(File = names(commits_path), Version = version,
+                            Author = author, Date = date,
+                            Message = message, stringsAsFactors = FALSE)
+  df_versions <- df_versions[order(df_versions$Date, decreasing = TRUE), ]
+  if (is.null(timezone) || is.na(timezone) || identical(timezone, "")) {
+    timezone <- "Etc/UTC"
+  }
+  df_versions$Date <- as.character(as.Date(df_versions$Date, tz = timezone))
+  rownames(df_versions) <- seq_len(nrow(df_versions))
+
+  return(df_versions)
 }
 
-check_vc <- function(input, r, s, github) {
+check_vc <- function(input, r, s, github, output_dir) {
  if (!is.null(r)) {
    pass <- TRUE
    log <- git2r::commits(r)
    if (length(log) > 0) {
-     sha <- git2r_slot(log[[1]], "sha")
+     sha <- log[[1]]$sha
      sha7 <- shorten_sha(sha)
      if (!is.na(github)) {
        sha_display <- sprintf("<a href=\"%s/tree/%s\" target=\"_blank\">%s</a>",
@@ -329,26 +367,31 @@ check_vc <- function(input, r, s, github) {
    summary <- sprintf("<strong>Repository version:</strong> %s", sha_display)
    # Scrub HTML and other generated content (e.g. site_libs). It's ok that these
    # have uncommitted changes.
-   s <- status_to_df(s)
-   # HTML
-   s <- s[!stringr::str_detect(s$file, "html$"), ]
-   # png
-   s <- s[!stringr::str_detect(s$file, "png$"), ]
-   # site_libs
-   s <- s[!stringr::str_detect(s$file, "site_libs"), ]
-   s <- df_to_status(s)
+   s <- scrub_status(s, r, output_dir = output_dir)
 
    status <- utils::capture.output(print(s))
    status <- c("<pre><code>", status, "</code></pre>")
    status <- paste(status, collapse = "\n")
-   details <- paste(collpase = "\n",
+   details <-
 "
 <p>
 Great! You are using Git for version control. Tracking code development and
 connecting the code version to the results is critical for reproducibility.
-The version displayed above was the version of the Git repository at the time
-these results were generated.
-<br><br>
+</p>
+"
+   if (sha_display != "No commits yet") {
+     details <- c(details,
+                  glue::glue(
+"<p>
+The results in this page were generated with repository version {sha_display}.
+See the <em>Past versions</em> tab to see a history of the changes made to the
+R Markdown and HTML files.
+</p>"
+                  ))
+   }
+   details <- c(details,
+"
+<p>
 Note that you need to be careful to ensure that all relevant files for the
 analysis have been committed to Git prior to generating the results (you can
 use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only
@@ -356,14 +399,16 @@ checks the R Markdown file, but you know if there are other scripts or data
 files that it depends on. Below is the status of the Git repository when the
 results were generated:
 </p>
+",
+status,
 "
-                , status,
-"<p>
+<p>
 Note that any generated files, e.g. HTML, png, CSS, etc., are not included in
 this status report because it is ok for generated content to have uncommitted
 changes.
 </p>
 ")
+   details <- paste(details, collapse = "\n")
  } else {
    pass <- FALSE
    summary <- "<strong>Repository version:</strong> no version control"
@@ -457,19 +502,33 @@ For reproduciblity it's best to always run the code in an empty environment.
     summary <- "<strong>Environment:</strong> objects present"
     details <-
 "
-The global environment had objects present when the code in the R Markdown
+<p>The global environment had objects present when the code in the R Markdown
 file was run. These objects can affect the analysis in your R Markdown file in
 unknown ways. For reproduciblity it's best to always run the code in an empty
 environment. Use <code>wflow_publish</code> or <code>wflow_build</code> to
-ensure that the code is always run in an empty environment.
+ensure that the code is always run in an empty environment.</p>
 "
     objects_table <- create_objects_table(envir)
     details <- paste(collapse = "\n",
                      details,
-                     "<br><br>",
                      "<p>The following objects were defined in the global
                      environment when these results were created:</p>",
                      objects_table)
+
+    if (utils::packageVersion("callr") == "3.3.0") {
+      details <- paste(collapse = "\n",
+                       details,
+                       "<p><strong>SOLUTION:</strong> The R package
+                       <a href=\"https://cran.r-project.org/package=callr\">callr</a>,
+                       which workflowr relies on to isolate the code execution
+                       from the current R session, has a known bug in version
+                       3.3.0. It writes the objects <code>data</code> and
+                       <code>env</code> to the global environment. At best
+                       this only causes the workflowr check to fail, but at
+                       worse could affect your results if your analysis uses
+                       variables with the same names. To avoid this problem,
+                       please update the callr package.</p>")
+    }
   }
 
   return(list(pass = pass, summary = summary, details = details))
@@ -483,10 +542,13 @@ create_objects_table <- function(env) {
                   function(x) format(utils::object.size(env[[x]]), units = "auto"),
                   character(1))
   df <- data.frame(Name = objects, Class = classes, Size = sizes)
-  table <- knitr::kable(df, format = "html", row.names = FALSE)
-  # Add table formatting
-  table <- stringr::str_replace(table, "<table>",
-            "<table class=\"table table-condensed table-hover\">")
+  table <- convert_df_to_html_table(df)
+  return(table)
+}
+
+convert_df_to_html_table <- function(df) {
+  table <- knitr::kable(df, format = "html", row.names = FALSE,
+                        table.attr = "class=\"table table-condensed table-hover\"")
   return(as.character(table))
 }
 
@@ -612,7 +674,7 @@ when running <code>wflow_build()</code> or <code>wflow_publish()</code>.
 
 add_git_path <- function(x, r) {
   if (!is.null(x)) {
-    file.path(git2r_workdir(r), x)
+    file.path(git2r::workdir(r), x)
   } else {
    NA_character_
   }
@@ -690,4 +752,153 @@ create_url_html <- function(url_repo, html, sha) {
 
 shorten_sha <- function(sha) {
   stringr::str_sub(sha, 1, 7)
+}
+
+# Detect absolute file paths in a character vector
+#
+# Detects Unix and Windows file paths. Paths must be surrounded by quotations
+# as they would appear in R code.
+#
+# Returns a character vector of all potential absolute paths
+#
+# Returns: "/a/b/c", '/a/b/c', "~/a/b/c", "~\\a\\b\\c", "C:/a/b/c", "C:\\a\\b\\c"
+# Ignores: /a/b/c, "~a", "C:a/b/c", "~"
+#
+# **Warning:** The identified paths may not be returned in the input order
+# because the order depends on the order of the regexes that are used to search
+# for paths.
+#
+# Note: Since this checks the entire document, including non-code, I made it
+# stringent. For example, it ignores "~" and "C:". These are technically valid
+# paths, but it's unlikely that workflowr will be able to provide useful advice
+# if these are actually being used as paths. Also, they could be in non-code
+# sections. A potential way to improve this check is to first extract the code
+# from the document and/or remove comments.
+detect_abs_path <- function(string) {
+  path_regex <- c("[\",\'](/.+?)[\",\']", # Unix path surrounded by ' or "
+                  "[\",\']([a-z,A-Z]:[/,\\\\].+?)[\",\']", # Windows path surrounded by ' or "
+                  "[\",\'](~[/,\\\\].+?)[\",\']" # Path with tilde surrounded by ' or "
+  )
+  paths <- list()
+  for (re in path_regex) {
+    paths <- c(paths, stringr::str_match_all(string, re))
+  }
+  paths <- Reduce(rbind, paths)[, 2]
+
+  return(paths)
+}
+
+# Check for absolute paths that should be relative paths
+#
+# Looks for absolute paths between quotation marks (to detect strings in code)
+# and between parentheses (to detect links in Markdown syntax). The paths have
+# to be within the same project.
+check_paths <- function(input, knit_root_dir) {
+
+  # Can't assume a workflowr just because they are using wflow_html().
+  proj_dir <- get_proj_dir(knit_root_dir)
+
+  lines <- readLines(input)
+  paths <- detect_abs_path(lines)
+  # Because fs doesn't remove the ~
+  paths_original <- paths
+  paths <- absolute(paths)
+  names(paths) <- paths_original
+  # Remove any duplicates
+  paths <- paths[!duplicated(paths)]
+
+  if (length(paths) > 0) {
+    internal <- vapply(paths, fs::path_has_parent, logical(1),
+                       parent = proj_dir)
+    paths <- paths[internal]
+  }
+
+  if (length(paths) == 0) {
+    pass <- TRUE
+    summary <- "<strong>File paths:</strong> relative"
+    details <-
+      "
+Great job! Using relative paths to the files within your workflowr project
+makes it easier to run your code on other machines.
+"
+  } else {
+    pass <- FALSE
+    summary <- "<strong>File paths:</strong> absolute"
+    # List the absolute paths and the suggested relative paths (need to be
+    # relative to knit_root_dir)
+    paths_df <- data.frame(absolute = names(paths),
+                           relative = relative(paths, start = knit_root_dir),
+                           stringsAsFactors = FALSE)
+    # If the original absolute path uses backslashes on Windows, use backslashes
+    # for the suggested relative path. Also display double backslashes as it
+    # would appear in R code.
+    paths_w_backslash <- stringr::str_detect(paths_df$absolute, "\\\\")
+    paths_df$relative[paths_w_backslash] <- stringr::str_replace_all(paths_df$relative[paths_w_backslash],
+                                                                     "/", "\\\\\\\\\\\\\\\\")
+    paths_df$absolute[paths_w_backslash] <- stringr::str_replace_all(paths_df$absolute[paths_w_backslash],
+                                                                     "\\\\\\\\", "\\\\\\\\\\\\\\\\")
+    paths_df_html <- convert_df_to_html_table(paths_df)
+    details <- glue::glue("
+<p>Using absolute paths to the files within your workflowr project makes it
+difficult for you and others to run your code on a different machine. Change
+the absolute path(s) below to the suggested relative path(s) to make your code
+more reproducible.</p>
+{paths_df_html}
+")
+  }
+
+  return(list(pass = pass, summary = summary, details = details))
+}
+
+# If uncertain if this is a workflowr project, search for these files in the
+# following order to attempt to find root of current project.
+#
+# *.Rproj
+# .git/
+# _workflowr.yml
+#
+# If none of these are present, return the input directory.
+get_proj_dir <- function(directory) {
+
+  # RStudio project file, .Rproj
+  proj_dir <- try(rprojroot::find_rstudio_root_file(path = directory),
+                silent = TRUE)
+  if (!inherits(proj_dir, "try-error")) return(proj_dir)
+
+  # .git/
+  proj_dir <- try(rprojroot::find_root_file(criterion = rprojroot::is_git_root,
+                                            path = directory),
+                  silent = TRUE)
+  if (!inherits(proj_dir, "try-error")) return(proj_dir)
+
+  # _workflowr.yml file
+  proj_dir <- try(rprojroot::find_root(rprojroot::has_file("_workflowr.yml"),
+                                       path = directory),
+                  silent = TRUE)
+  if (!inherits(proj_dir, "try-error")) return(proj_dir)
+
+  return(directory)
+}
+
+# Scrub HTML and other generated content (e.g. site_libs). It's ok that these
+# have uncommitted changes.
+scrub_status <- function(status, repo, output_dir, remove_ignored = FALSE) {
+  s <- status_to_df(status)
+  full_path <- file.path(git2r::workdir(repo), s$file)
+  generated <- vapply(full_path, fs::path_has_parent, logical(1),
+                      parent = absolute(output_dir))
+  s <- s[!generated, ]
+  s <- df_to_status(s)
+
+  # # HTML
+  # s <- s[!stringr::str_detect(s$file, "html$"), ]
+  # # png
+  # s <- s[!stringr::str_detect(s$file, "png$"), ]
+  # # site_libs
+  # s <- s[!stringr::str_detect(s$file, "site_libs"), ]
+  # s <- df_to_status(s)
+
+  if (remove_ignored) s$ignored <- NULL
+
+  return(s)
 }

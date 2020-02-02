@@ -16,6 +16,11 @@
 # non-existing.
 #
 obtain_existing_path <- function(path) {
+  if (length(path) > 1) stop("Invalid input: the vector should only have element")
+  if (is.null(path)) stop("Invalid input: NULL")
+  if (is.na(path)) stop("Invalid input: NA")
+  if (!is.character(path)) stop("Invalid input: ", path)
+
   if (fs::dir_exists(path)) {
     return(absolute(path))
   } else {
@@ -70,7 +75,11 @@ absolute <- function(path) {
   # Ensure Windows Drive is uppercase
   newpath <- toupper_win_drive(newpath)
   # Resolve symlinks
-  newpath <- resolve_symlink(newpath)
+  if (.Platform$OS.type == "windows") {
+    newpath <- resolve_symlink(newpath)
+  } else {
+    newpath <- fs::path_real(newpath)
+  }
   newpath <- as.character(newpath)
 
   return(newpath)
@@ -146,6 +155,32 @@ resolve_symlink_ <- function(path) {
   return(fs::path_join(c(
     resolve_symlink_(fs::path_join(parts[-len])),
     parts[len])))
+}
+
+# Attempts to delete file(s) and/or directory(ies) pointed to by path.
+#
+# path - character vector
+#
+# Fails gracefully. unlink() fails silently. fs::file_delete() properly throws
+# an error, but it is not the most informative. This will report the files that
+# weren't deleted as well as their file permissions.
+wflow_delete <- function(path) {
+
+  # Needed for, e.g. AppVeyor, where relative paths can cause permission issues
+  path <- absolute(path)
+
+  attempt_to_delete <- try(fs::file_delete(path), silent = TRUE)
+
+  persistent <- fs::file_exists(path)
+  if (any(persistent)) {
+    stop("Unable to delete the following file(s) or directory(ies):\n",
+         paste(path[persistent], collapse = "\n"),
+         "\nDo you have permission to delete them? The permissions are, in order:\n",
+         paste(fs::file_info(path[persistent])$permissions, collapse = "\n"),
+         call. = FALSE)
+  }
+
+  return(invisible(path))
 }
 
 # Because ~ maps to ~/Documents on Windows, need a reliable way to determine the
@@ -248,7 +283,7 @@ get_output_dir <- function(directory, yml = "_site.yml") {
 
 # Convert the output of git2r::status() to a data frame for easier manipulation
 status_to_df <- function(x) {
-  stopifnot(class(x) == "git_status")
+  stopifnot(inherits(x, "git_status"))
 
   col_status <- character()
   col_substatus <- character()
@@ -361,4 +396,59 @@ get_win_drive <- function(path) {
   drive <- fs::path_split(path)
   drive <- vapply(drive, function(x) x[1], FUN.VALUE = character(1))
   return(drive)
+}
+
+# Return TRUE if getOption("browser") is properly set. Required for opening URLs
+# via browseURL().
+#
+# This can either be an R function that accepts a URL or a string with the
+# name of the system program to invoke (e.g. "firefox"). If it is NULL or "",
+# it won't work.
+check_browser <- function() {
+  browser_opt <- getOption("browser")
+
+  if (is.null(browser_opt)) return(FALSE)
+
+  if (is.function(browser_opt)) return(TRUE)
+
+  if (nchar(browser_opt) > 0) return(TRUE)
+
+  return(FALSE)
+}
+
+# Only return the first line of a multi-line string(s)
+get_first_line <- function(x) {
+  split <- stringr::str_split(x, "\n")
+  first_lines <- vapply(split, function(x) x[1], character(1))
+  return(first_lines)
+}
+
+# Check for `site: workflowr::wflow_site` in index.Rmd
+check_site_generator <- function(index) {
+  if (!fs::file_exists(index))
+    stop(glue::glue("Unable to find index.Rmd. Expected to find {index}"),
+         call. = FALSE)
+
+  header <- rmarkdown::yaml_front_matter(index)
+
+  if (is.null(header$site)) return(FALSE)
+
+  if (header$site == "workflowr::wflow_site") return(TRUE)
+
+  return(FALSE)
+}
+
+# Save the files open in RStudio editor
+autosave <- function() {
+  if (!rstudioapi::isAvailable(version_needed = "1.1.287")) return(FALSE)
+
+  rstudioapi::documentSaveAll()
+}
+
+check_wd_exists <- function() {
+  wd <- fs::path_wd()
+  if (length(fs::path_wd()) == 0)
+    stop("The current working directory doesn't exist.",
+         " Use setwd() to change to an existing directory.",
+         call. = FALSE)
 }

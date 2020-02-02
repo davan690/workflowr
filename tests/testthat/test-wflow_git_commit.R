@@ -2,6 +2,10 @@ context("wflow_git_commit")
 
 # Setup -----------------------------------------------------------------------
 
+source("setup.R")
+
+skip_on_cran_windows()
+
 library("git2r")
 # start project in a tempdir
 site_dir <- tempfile("test-wflow_git_commit-")
@@ -23,7 +27,7 @@ test_that("wflow_git_commit can commit one new file", {
   expect_silent(actual <- wflow_git_commit(f1, project = site_dir))
   expect_true(f1 %in% actual$commit_files)
   recent <- commits(r, n = 1)[[1]]
-  expect_identical(git2r_slot(actual$commit, "sha"), git2r_slot(recent, "sha"))
+  expect_identical(actual$commit$sha, recent$sha)
   actual_print <- paste(utils::capture.output(actual), collapse = "\n")
   expect_true(grepl(sprintf("\\$ git add %s", f1), actual_print))
 })
@@ -35,9 +39,22 @@ test_that("wflow_git_commit can commit multiple new files", {
   expect_silent(actual <- wflow_git_commit(c(f2, f3), project = site_dir))
   expect_identical(actual$commit_files, c(f2, f3))
   recent <- commits(r, n = 1)[[1]]
-  expect_identical(git2r_slot(actual$commit, "sha"), git2r_slot(recent, "sha"))
+  expect_identical(actual$commit$sha, recent$sha)
   actual_print <- paste(utils::capture.output(actual), collapse = "\n")
   expect_true(grepl(sprintf("\\$ git add %s %s", f2, f3), actual_print))
+})
+
+test_that("wflow_git_commit can commit a directory of files", {
+  d1 <- file.path(site_dir, "subdir")
+  fs::dir_create(d1)
+  d1_files <- file.path(d1, paste0("f", 1:5, ".txt"))
+  fs::file_create(d1_files)
+  expect_silent(actual <- wflow_git_commit(d1, project = site_dir))
+  expect_identical(actual$commit_files, d1_files)
+  recent <- commits(r, n = 1)[[1]]
+  expect_identical(actual$commit$sha, recent$sha)
+  actual_print <- paste(utils::capture.output(actual), collapse = "\n")
+  expect_true(grepl(sprintf("\\$ git add %s", d1), actual_print))
 })
 
 test_that("wflow_git_commit creates a commit message", {
@@ -74,7 +91,7 @@ test_that("wflow_git_commit can commit all tracked files", {
   expect_silent(actual <- wflow_git_commit(all = TRUE, project = site_dir))
   expect_identical(actual$commit_files, tracked)
   recent <- commits(r, n = 1)[[1]]
-  expect_identical(git2r_slot(actual$commit, "sha"), git2r_slot(recent, "sha"))
+  expect_identical(actual$commit$sha, recent$sha)
 })
 
 test_that("wflow_git_commit does not affect Git repo if `dry_run = TRUE`", {
@@ -99,7 +116,7 @@ test_that("wflow_git_commit can perform the initial commit", {
 
   r <- init(x)
   config(r, user.name = "Test Name", user.email = "test@email")
-  o <- wflow_git_commit(c("*", ".gitignore", ".Rprofile"),
+  o <- wflow_git_commit(c("*", ".gitattributes", ".gitignore", ".Rprofile"),
                         message = "Initial commit", project = x)
   expect_equal(length(commits(r)), 1)
   s <- status(r)
@@ -163,7 +180,7 @@ test_that("wflow_git_commit_ can commit deleted files from project subdir", {
 
 test_that("wflow_git_commit fails with invalid argument for files", {
   expect_error(wflow_git_commit(files = 1, project = site_dir),
-               "files must be NULL or a character vector of filenames")
+               "Observed input: 1")
   expect_error(wflow_git_commit(files = "nonexistent.Rmd", project = site_dir),
                "Not all files exist. Check the paths to the files")
 })
@@ -216,7 +233,7 @@ test_that("wflow_git_commit throws an error if user.name and user.email are not 
                "wflow_git_commit")
 })
 
-test_that("wflow_git_commit fails early if merge conflicts detected", {
+test_that("wflow_git_commit fails early if merge conflicts detected in Rmd file", {
   x <- tempfile("test-merge-conflicts-")
   suppressMessages(wflow_start(x, change_wd = FALSE, user.name = "Test Name",
                                user.email = "test@email"))
@@ -237,10 +254,58 @@ test_that("wflow_git_commit fails early if merge conflicts detected", {
   add(r, rmd)
   commit(r, "edit index.Rmd on master")
   # Generate merge conflict
-  workflowr:::git2r_merge(r, "b2")
+  workflowr:::git2r_merge(r, "b2", fail = FALSE)
 
   skip_on_cran()
 
   # Attempt to publish
-  expect_error(wflow_publish(rmd, project = x), rmd)
+  expect_error(wflow_publish(rmd, view = FALSE, project = x), rmd)
+})
+
+
+test_that("wflow_git_commit fails early if merge conflicts detected in non-Rmd file", {
+  x <- tempfile("test-merge-conflicts-")
+  suppressMessages(wflow_start(x, change_wd = FALSE, user.name = "Test Name",
+                               user.email = "test@email"))
+  x <- workflowr:::relative(x)
+  on.exit(unlink(x, recursive = TRUE, force = TRUE))
+  r <- repository(path = x)
+  s <- wflow_status(project = x)
+  rmd <- file.path(s$analysis, "index.Rmd")
+
+  # Edit non-Rmd file on new branch
+  non_rmd <- file.path(s$root, "test.txt")
+  checkout(r, "b2", create = TRUE)
+  cat("\nedit on b2\n", file = non_rmd, append = TRUE)
+  add(r, non_rmd)
+  commit(r, "edit non-Rmd on b2")
+  # Edit non-Rmd file on master branch
+  checkout(r, "master")
+  cat("\nedit on master\n", file = non_rmd, append = TRUE)
+  add(r, non_rmd)
+  commit(r, "edit non-Rmd on master")
+  # Generate merge conflict
+  workflowr:::git2r_merge(r, "b2", fail = FALSE)
+
+  skip_on_cran()
+
+  # Attempt to publish
+  expect_error(wflow_publish(rmd, view = FALSE, project = x), non_rmd)
+})
+
+test_that("wflow_git_commit fails if Git repository is locked", {
+
+  file_to_commit <- file.path(site_dir, "file")
+  fs::file_create(file_to_commit)
+  on.exit(wflow_remove(file_to_commit, project = site_dir))
+
+  index_lock <- file.path(git2r::workdir(r), ".git/index.lock")
+  fs::file_create(index_lock)
+  index_lock <- workflowr:::absolute(index_lock)
+
+  expect_error(wflow_git_commit(file_to_commit, project = site_dir),
+               "The Git repository is locked")
+  expect_error(wflow_git_commit(file_to_commit, project = site_dir), index_lock)
+  fs::file_delete(index_lock)
+  expect_silent(wflow_git_commit(file_to_commit, project = site_dir))
 })

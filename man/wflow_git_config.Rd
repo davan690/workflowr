@@ -4,7 +4,7 @@
 \alias{wflow_git_config}
 \title{Configure Git settings}
 \usage{
-wflow_git_config(user.name = NULL, user.email = NULL, ...)
+wflow_git_config(user.name = NULL, user.email = NULL, ..., overwrite = FALSE)
 }
 \arguments{
 \item{user.name}{character (default: NULL). Git user name. Git assigns an
@@ -16,6 +16,9 @@ email when committing (i.e. saving) changes. If you have never used Git
 before on your computer, make sure to set this.}
 
 \item{...}{Arbitrary Git settings, e.g. \code{core.editor = "nano"}.}
+
+\item{overwrite}{logical (default: FALSE). Overwrite existing Git global
+settings.}
 }
 \value{
 An object of class \code{wflow_git_config}, which is a list with the
@@ -34,7 +37,7 @@ An object of class \code{wflow_git_config}, which is a list with the
 \description{
 \code{wflow_git_config} configures the global Git settings on the current
 machine. This is a convenience function to run Git commands from the R
-console instead of the Terminal. The same functionality can be acheived by
+console instead of the Terminal. The same functionality can be achieved by
 running \code{git config} in the Terminal.
 }
 \details{

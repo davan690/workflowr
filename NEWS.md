@@ -1,3 +1,355 @@
+# workflowr 1.6.0.9000
+
+* Workflowr functions check if the working directory exists (idea from @pcarbo,
+#185)
+* `wflow_use_github()` can now create repositories for GitHub organizations
+using the new argument `organization`. However, GitLab Groups should still be
+specified with the argument `username` for `wflow_use_gitlab()` (bug report from
+@stephens999, #186)
+* Any workflowr function that prompts for user input will continue to re-prompt
+until valid input has been entered (or canceled by hitting the key `Esc`) (idea
+from @pcarbo)
+* Document that GitLab.com provides private repositories with access control to
+the source code repository and the website (#187)
+* Internal refactoring for increased speed and improved error handling of input
+arguments
+* Check for class with `inherits()` (#189)
+
+# workflowr 1.6.0
+
+## New features
+
+* New function `wflow_run()`. It executes the code chunks of an R Markdown file
+in the current R session without affecting any of the website files. This is
+meant to be used while interactively developing an analysis. It does not change
+the working directory or isolate the computation from the current R session.
+This is analogous to the RStudio option "Run all" to run all the code chunks
+(idea from @pcarbo)
+
+* New autosave feature. The workflowr functions `wflow_build()`,
+`wflow_publish()`, and `wflow_status()` will autosave any unsaved files open in
+the RStudio editor pane. This is similar to the behavior of the Knit HTML
+button. This feature can be disabled by setting the package option
+`workflowr.autosave` to `FALSE` (idea from @xiangzhu in #179)
+
+* New [vignette][vig-data] on using large data files in a workflowr project
+(motivated by @xiangzhu, #183)
+
+[vig-data]: https://jdblischak.github.io/workflowr/articles/wflow-10-data.html
+
+* If there are merge conflicts after running `wflow_git_pull()`, and the merge
+was allowed to proceed (`fail = FALSE`), then the conflicted files are listed
+and optionally opened in RStudio at the first line of the conflict that needs
+to be resolved
+
+* `wflow_git_config()` has a new argument `overwrite`. Previously
+`wflow_git_config()` would by default overwrite any previous settings. Now this
+will throw an error. To overwrite a previous setting, set `overwrite = TRUE`
+([idea][f1000-config-overwrite] from @petebaker)
+
+[f1000-config-overwrite]: https://f1000research.com/articles/8-1749/v1#referee-response-55117
+
+## Minor improvements and bug fixes
+
+* Warn user if only HTML file has been committed (and avoid throwing an error).
+Previously this threw an error because workflowr expects the R Markdown file to
+be committed to the Git repo if its corresponding HTML file is
+(bug report from @kevinlkx)
+
+* Warn user if a dependency does not meet the minimum required version. There
+are multiple ways this could happen. First, it is possible to install an old
+version after having installed workflowr. Second, when running
+`install.packages()`, if the minimum required version is available in any of the
+package libraries, it is not installed. However, if the version of the package
+in the first directory listed in `.libPaths()` does not meet the minimum
+required version, it is still the one that is loaded when workflowr is loaded
+(idea from @stephens999)
+
+* Fix off-by-one date bug by specifying the local timezone (see [git2r Issue
+407][git2r407])
+
+[git2r407]: https://github.com/ropensci/git2r/issues/407
+
+* Fix bug when path to project includes a space. The bug was introduced in
+version 1.5.0 with the feature to use the system Git executable to run `git
+ls-files`. To fix the issue in version 1.5.0, set `options(workflowr.sysgit =
+"")` in the file `.Rprofile` (bug report from @wolfemd, #180)
+
+* Fix bug caused by an unset timezone. If the machine has no timezone set,
+workflowr will default to Etc/UTC
+
+* Handle missing title/pagetitle warning from pandoc 2+ and rmarkdown 1.18+
+(see [rmarkdown Issue 1355][rmarkdown1355])
+
+[rmarkdown1355]: https://github.com/rstudio/rmarkdown/pull/1355#issuecomment-558817744
+
+* Improve speed of `wflow_publish()`/`wflow_status()` by using the system Git
+executable (if available) to obtain the last commit time of the analysis files
+(this is used to determine which published Rmd files are outdated and need to be
+republished)
+
+* Report exact command to run `git push` or `git pull` in the terminal if either
+`wflow_git_push()` or `wflow_git_pull()` fail (reported by @jennysjaarda, #182)
+
+* Update FAQ to include how to create a PDF using the RStudio Knit button
+(reported by @han16)
+
+* Update citation to [workflowr publication](https://doi.org/10.12688/f1000research.20843.1)
+
+* Properly quote the Git executable with `shQuote()` whenever Git is called
+from R
+
+# workflowr 1.5.0
+
+This minor release of workflowr includes a new function, the introduction of
+options to control package-wide function behavior, the ability to suppress the
+workflowr report from the HTML file, a new vignette for teaching workflowr, and
+lots of error handling improvements.
+
+## New function `wflow_quickstart()`
+
+The new function `wflow_quickstart()` provides a simple interface to
+effortlessly create a workflowr project from an existing data analysis. Pass it
+your existing R Markdown file(s), and it will start a new workflowr project,
+publish the analysis files, and configure GitHub (or GitLab).
+
+```
+wflow_quickstart(files = "existing-analysis.Rmd", username = "your-github-username")
+```
+
+## Package options
+
+This is the first release to include options for controlling the behavior of all
+workflowr functions. This makes it more convenient for you to create a
+consistent workflowr experience. You can set the options in your project's
+`.Rprofile` (using the function `options()`) instead of having to always
+remember to change a default argument every time you call a function.
+
+Currently there are two workflowr package options. See `?workflowr` for more
+details.
+
+* `workflowr.git`: Set the path to the system Git executable, which is
+occasionally used to increase the speed of Git operations performed by workflowr
+functions.
+
+* `workflowr.view`: Should workflowr functions open webpages for viewing in the
+browser? The default is set to `interactive()` (i.e. it is `TRUE` only if it is
+an interactive R session). This option is currently used by `wflow_build()`,
+`wflow_git_push()`, and `wflow_publish()`.
+
+## Workshop tutorial for teaching workflowr
+
+The new vignette "Reproducible research with workflowr" is designed to be taught
+as a tutorial in a workshop setting. It includes setup instructions, an example
+analysis to highlight the benefits of workflowr, and troubleshooting advice.
+
+## Suppress the HTML workflowr report
+
+If you'd like to suppress the workflowr report at the top of an HTML page, you
+can set the option `suppress_report` to `TRUE`. To suppress the report in every
+HTML file, set the option in `_workflowr.yml`:
+
+```
+suppress_report: TRUE
+```
+
+To suppress the report in a specific HTML file, add the following to the YAML
+header of the corresponding Rmd file:
+
+```
+workflowr:
+  suppress_report: TRUE
+```
+
+Many thanks to @kaneplusplus for implementing this feature! (#168)
+
+## Minor improvements and bug fixes
+
+* Require git2r >= 0.26.0 to support internal changes that increase speed and
+robustness of workflowr Git functionality
+
+* `wflow_start()` adds a `.gitattributes` file that classifies R Markdown files
+as R code for the official GitHub language statistics calculated via
+[linguist][]. The default setting is to ignore R Markdown files.
+
+[linguist]: https://github.com/github/linguist
+
+* Address [callr 3.3.0 bug][callr-bug-3.3.0] that writes objects to the global
+environment, causing the workflowr check of the global environment to fail. The
+failed check now explains that the problem can be fixed by updating the callr
+package.
+
+[callr-bug-3.3.0]: https://github.com/r-lib/callr/commit/9f7665e1081da6f5134b214da694b4461d05659f
+
+* Warn user from `wflow_build()` if `index.Rmd` is missing the
+workflowr-specific site generator `wflow_site()` (idea from @pcarbo, #177)
+
+* Fail early if missing required file `index.Rmd`
+
+* Add argument `fail` to `wflow_git_pull()` with default value of `TRUE`. Now if
+a pull generates a merge conflict, `wflow_git_pull()` will abort the pull. Thus
+no changes will be made to the local files. Users can set `fail = FALSE` to allow
+Git to add the merge conflicts to the local files.
+
+* Speed improvements for `wflow_publish()`
+
+* Improved error handling when files contain merge conflicts. Before workflowr
+only detected merge conflicts in Rmd files. Now it detects them for any file
+(since Git requires any merge conflicts to be resolved before it makes any new
+commits).
+
+* Warn user if `knit_root_dir` (the directory where the code in the Rmd files is
+executed) defined in `_workflowr.yml` is an absolute path. An absolute path
+would only work on the current computer, limiting reproducibility.
+
+* Include Git status in output of `wflow_status()`. Note that it purposefully
+excludes any files in the website directory since these generated files should
+only be committed by workflowr. You can omit the Git status by setting
+`include_git_status = FALSE` (idea from @pcarbo)
+
+* Make it clearer that you have two options for creating the remote repository on
+Github: 1) let `wflow_use_github()` do it automatically, or 2) create it yourself
+manually at https://github.com/new (idea from @pcarbo)
+
+* New FAQ "How can I save a figure in a vector graphics format (e.g. PDF)?"
+
+* Added citation to [F1000Research
+paper](https://doi.org/10.12688/f1000research.20843.1). Run
+`citation("workflowr")` to obtain the new citation information.
+
+* Fixed `wflow_start()` infinite recursion bug by requiring stringr >=1.3.0
+
+* Added httpuv as imported dependency so that `wflow_use_github()` is able to
+automatically create the GitHub repository via the httr package
+
+* Set (or increased) minimum required versions for fs, git2r, httpuv,
+rstudioapi, stringr, whisker, clipr, shiny, testthat, and withr
+
+* Document possible error of a greyed out GitHub authentication button when
+trying to give permission for workflowr to create a repository for your account
+
+* Fixed bug in date displayed in table of past versions in the workflowr report.
+Depending on the time of day the commit was made, the displayed day may have
+been off by one.
+
+# workflowr 1.4.0
+
+This minor release of workflowr features further GitHub integration, a new
+reproducibility check, and various improvements and bug fixes.
+
+## New features
+
+* The initial GitHub setup always included the manual step of creating the
+GitHub repository, but this is no longer the case! When you run
+`wflow_use_github("username")`, it will offer to create the new GitHub
+repository for you. If you sign-in to GitHub via your web browser and grant
+workflowr permission, it will be created automatically.
+
+* Absolute paths to files on your local computer are not reproducible. If you or
+someone else tries to execute the code on a different machine, it will fail. Now
+workflowr will automatically search for absolute paths to files that are inside
+of the workflowr project. If it detects any, it will fail the reproducibility
+check, and provide you with the equivalent relative paths to use.
+
+* Now every time you push your latest changes with `wflow_git_push()`, a new
+browser tab will automatically be opened to your online repository
+(idea from @pcarbo)
+
+## Minor improvements and bug fixes
+
+* Mention `knitr::include_graphics()` as an option for including external images
+(idea from @Zepeng-Mu, #162)
+* Check if Git repository is locked and produce error message that explains how
+to fix it (idea from @brimittleman)
+* Document that `wflow_build()` and `wflow_publish()` build the files in the
+given order if they are provided explicitly to the argument `files` (idea from
+@antass and @pcarbo, #164)
+* Handle spaces in chunk names for HTML targets. If a chunk name contains a
+space, the name of the figure file will also has a space. This broke the
+accompanying link for the HTML button with the table of previous versions of the
+figure (because it uses the filename to be unique). Now the spaces are removed
+in the HTML link.
+* Add FAQ entry on installing packages in a workflowr project (idea from
+@xiangzhu, #160)
+* `wflow_use_github()`/`wflow_use_gitlab()` provide better guesses if the
+arguments `username` or `repository` are left blank. If `repository` is `NULL`,
+it is set to the name of the workflowr project directory (idea from @pcarbo).
+* `wflow_git_push()` and `wflow_git_pull()` no longer accept direct URLs to
+remote repositories. The argument `remote` must be `NULL` or the name of an
+existing remote. The support for direct URLs was likely rarely used since it is
+rarely used with Git as well, and it likely never worked given how the
+underlying functions from [git2r][] work.
+* Document in the GitLab vignette that the repository will be automatically
+created the first time the repository is pushed with `wflow_git_push()` (this is
+a feature unique to GitLab)
+
+# workflowr 1.3.0
+
+This minor release of workflowr introduces two new functions, RStudio Addins,
+and various minor improvements.
+
+## New functions
+
+* The new function `wflow_toc()` builds a table of contents of the published R
+Markdown files in a workflowr project (@JiaxiangBU, #151, #155)
+
+* The new function `wflow_rename_proj()` renames a workflowr project throughout
+all its project files (idea from  @frm1789 and @kbroman, #148)
+
+## RStudio Addins
+
+[RStudio Addins][rstudio-addins] allow you to execute R code via the RStudio
+Addins menu. For extra convenience, you can [bind the addins to keyboard
+shortcuts][rstudio-addins-shortcuts]. The following workflowr functions have
+addins:
+
+* `wflow_build()`
+* `wflow_publish()`
+* `wflow_status()`
+* `wflow_toc()`
+* `wflow_view()`
+
+Note that the addin for `wflow_publish()` is a Shiny Gadget that enables you to
+interactively choose which files to publish and write a detailed commit message
+(assistance from @zaynaib and @argdata, #143).
+
+[rstudio-addins]: https://rstudio.github.io/rstudioaddins/
+[rstudio-addins-shortcuts]: https://rstudio.github.io/rstudioaddins/#keyboard-shorcuts
+
+## Minor improvements and bug fixes
+
+* `wflow_build()` fails early if pandoc is not installed (@zaynaib, #75)
+
+* `wflow_git_push()`/`wflow_git_pull()` fail early if user tries to use SSH
+authentication when it is not supported by the current installation of
+git2r/libgit2 (#144)
+
+* Fix support for knitr chunk option `collapse` and `indent` (reported by
+@pcarbo, #149)
+
+* Fix support for rmarkdown option `keep_md` (see
+[rmarkdown Issue 1558][rmarkdown-1558])
+
+[rmarkdown-1558]: https://github.com/rstudio/rmarkdown/issues/1558
+
+* Skip tests that only fail on CRAN servers (this is why there are no macOS
+binaries for 1.2.0)
+
+* Add a GitHub Pull Request template
+
+* Rename reproducibility tab "Report" to "Checks" (idea from @pcarbo)
+
+* Fix spacing issue with session information button (reported by @pcarbo, #157)
+
+* `wflow_status()` reports if the configuration files `_workflowr.yml` and
+`_site.yml` have been edited
+
+* Disable inline code chunks by default in R Markdown files created by
+workflowr. Document how to use inline code chunks in the [FAQ][faq] (discussed
+with @rgayler and @Robinlovelace , #140)
+
+[faq]: https://jdblischak.github.io/workflowr/articles/wflow-05-faq.html
+
 # workflowr 1.2.0
 
 This release overhauls the layout of the reproducibility report, adds support
@@ -47,7 +399,7 @@ A popular knitr/rmarkdown feature is caching slow-running chunks. This can be
 problematic for workflowr because it assumes that the results are newly created
 when `wflow_publish()` publishes the results with a given version of the code.
 In this release, workflowr now provides warnings, safety checks, and some
-convience arguments for safely using caching.
+convenience arguments for safely using caching.
 
 * Include a check in the reproducibility report that reports any existing cached
 chunks
@@ -60,7 +412,7 @@ for iterative development when plots from cached chunks may not be regenerated
 during a build. However, `clean_fig_files` is fixed to `TRUE` for
 `wflow_publish()` to ensure that the final results are produced during the
 build (suggested by @lazappi, #113)
-* Add argument `delete_cache` to `wflow_build()`/`wflow_publish()`. The defult
+* Add argument `delete_cache` to `wflow_build()`/`wflow_publish()`. The default
 is `FALSE`, but if set to `TRUE` it will delete the cache directory prior to
 building each R Markdown file. This helps ensure reproducibility of the
 published results
@@ -159,7 +511,7 @@ long-running code chunks (idea from @pcarbo)
     most recently modified HTML is different than those specified by `files`,
     they will all be opened for viewing
     * S3 print method
-    * Do not attemt to open HTML files with `browseURL()` if
+    * Do not attempt to open HTML files with `browseURL()` if
     `getOption("browser")` does not provide a default option
 
 ## Internal changes
@@ -235,14 +587,14 @@ wflow_update()
 
 ## Details
 
-* Introduce `wflow_html()` and `wflow_site()` to overhaul the reproduciblity
+* Introduce `wflow_html()` and `wflow_site()` to overhaul the reproducibility
 features of workflowr
 * Improve API consistency:
     * `wflow_commit()` -> `wflow_git_commit()`
     * `wflow_remotes()` -> `wflow_git_remote()`
 * Remove some less commonly used infrastructure files
 * Remove template infrastructure: `wflow_open()` and `wflow_convert()`
-* Reimplement `wflow_update()` to udpate a pre-1.0 workflowr project to a
+* Reimplement `wflow_update()` to update a pre-1.0 workflowr project to a
 post-1.0 project
 * Remove `create_links_page()` (not widely used, if at all)
 * Note in documentation that setting the seed via `wflow_build()` or
@@ -272,7 +624,7 @@ pull using the SSH protocol
 
 * When `wflow_git_push()` or `wflow_git_pull()` fails for an unknown reason, the
 exact error message from `git2r::push()` or `git2r::pull()` is reported to
-faciliate troubleshooting
+facilitate troubleshooting
 
 * Multiple other internal changes to make workflowr more robust
 
@@ -329,7 +681,7 @@ have the necessary configuration (#87, #88)
 
 * The log files by default are now written to the directory returned by
 `tempdir()` instead of to `/tmp/workflowr`. This prevents failures due to
-permission issues when mutliple workflowr users try to use the same machine
+permission issues when multiple workflowr users try to use the same machine
 (e.g. a compute node on a HPC cluster) (#86)
 
 ## Miscellaneous
@@ -354,7 +706,7 @@ Start and Getting Started vignette have been updated to reflect this.
 
 ## Miscellaneous
 
-* Added FAQ on sharing workflowr sites securely using Beaker Browswer
+* Added FAQ on sharing workflowr sites securely using Beaker Browser
 (@johnsonlab in #59 & #65)
 * Added .Rprofile to automatically load workflowr (@vanAmsterdam in #73)
 * Added FAQ about website not displaying (#70)
@@ -450,7 +802,7 @@ re-built HTML files.
 
 * By default, `wflow_build()` runs in "Make"-mode, only building R Markdown 
 files that have been updated more recently than their corresponding HTML files. 
-If instead files are specfically stated, those files will be built.
+If instead files are specifically stated, those files will be built.
 
 * By default, R Markdown files are now built each in their own separate R 
 session (similar in function to the "Knit HTML" button in RStudio). This
@@ -480,7 +832,7 @@ commit R Markdown files that are tracked by Git.
 
 ## Miscellaneous
 
-* All workflowr functions should now accept the file extesion `.rmd` in addition
+* All workflowr functions should now accept the file extension `.rmd` in addition
 to `.Rmd` (Issue #10)
 
 * Replaced the shared argument `path` with `project` to clarify that this
@@ -542,7 +894,7 @@ Users should run `wflow_build()` instead. `wflow_update()` removes the build spe
 
 * Improved naming of functions: `start_project` -> `wflow_start`, `open_rmd` -> `wflow_open`, `build_site` -> `wflow_build`, `commit_site` -> `wflow_commit`, `create_results` -> `create_links_page`
 
-* `wflow_commit` can optionally add and commit provided files (argument is `commit_files`) before re-building website and commiting HTML files
+* `wflow_commit` can optionally add and commit provided files (argument is `commit_files`) before re-building website and committing HTML files
 
 * `wflow_open` accepts multiple filenames
 

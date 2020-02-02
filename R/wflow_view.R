@@ -78,16 +78,9 @@ wflow_view <- function(files = NULL, latest = FALSE, dry_run = FALSE,
 
   # Check input arguments ------------------------------------------------------
 
+  files <- process_input_files(files, allow_null = TRUE,
+                               convert_to_relative_paths = TRUE)
   if (!is.null(files)) {
-    if (!(is.character(files) && length(files) > 0))
-      stop("files must be NULL or a character vector of filenames")
-    if (any(fs::dir_exists(files)))
-      stop("files cannot include a path to a directory")
-    files <- glob(files)
-    if (!all(fs::file_exists(files)))
-      stop("Not all files exist. Check the paths to the files")
-    # Change filepaths to relative paths
-    files <- relative(files)
     # Check for valid file extensions
     ext <- tools::file_ext(files)
     ext_wrong <- !(ext %in% c("Rmd", "rmd", "html"))
@@ -95,15 +88,10 @@ wflow_view <- function(files = NULL, latest = FALSE, dry_run = FALSE,
       stop(wrap("File extensions must be either Rmd, rmd, or html."))
   }
 
-  if (!(is.logical(latest) && length(latest) == 1))
-    stop("latest must be a one element logical vector. You entered: ", latest)
-  if (!(is.logical(dry_run) && length(dry_run) == 1))
-    stop("dry_run must be a one element logical vector. You entered: ", dry_run)
-  if (!(is.character(project) && length(project) == 1))
-    stop("project must be a one element character vector. You entered: ", project)
-  if (!fs::dir_exists(project))
-    stop("project does not exist. You entered: ", project)
-
+  assert_is_flag(latest)
+  assert_is_flag(dry_run)
+  check_wd_exists()
+  assert_is_single_directory(project)
   project <- absolute(project)
 
   p <- wflow_paths(project = project)
@@ -167,20 +155,7 @@ wflow_view <- function(files = NULL, latest = FALSE, dry_run = FALSE,
   # If no option is set for browser, browseURL will throw an error. This is
   # disastrous if wflow_view was called from wflow_publish because it resets
   # everything it had done if there is an error.
-
-  browser_opt <- getOption("browser")
-  # This can either be an R function that accepts a URL or a string with the
-  # name of the system program to invoke (e.g. "firefox"). If it is NULL or "",
-  # it won't work.
-  if (is.null(browser_opt)) {
-    browser <- FALSE
-  } else if (is.function(browser_opt)) {
-    browser <- TRUE
-  } else if (nchar(browser_opt) > 0) {
-    browser <- TRUE
-  } else {
-    browser <- FALSE
-  }
+  browser <- check_browser()
 
   # View files -----------------------------------------------------------------
 

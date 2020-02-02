@@ -4,9 +4,17 @@
 \alias{wflow_git_push}
 \title{Push files to remote repository}
 \usage{
-wflow_git_push(remote = NULL, branch = NULL, username = NULL,
-  password = NULL, force = FALSE, set_upstream = TRUE,
-  dry_run = FALSE, project = ".")
+wflow_git_push(
+  remote = NULL,
+  branch = NULL,
+  username = NULL,
+  password = NULL,
+  force = FALSE,
+  set_upstream = TRUE,
+  view = getOption("workflowr.view"),
+  dry_run = FALSE,
+  project = "."
+)
 }
 \arguments{
 \item{remote}{character (default: NULL). The name of the remote repository.
@@ -30,6 +38,11 @@ Equivalent to: \code{git push -f}}
 track the remote branch if it isn't already tracking one. This is likely
 what you want. Equivalent to: \code{git push -u remote branch}}
 
+\item{view}{logical (default: \code{getOption("workflowr.view")}). Open the
+URL to the repository in the browser. Ignored if \code{dry_run = TRUE}.
+Also note that this only works if the option \code{browser} is set, which
+you can check with \code{getOption("browser")}.}
+
 \item{dry_run}{logical (default: FALSE). Preview the proposed action but do
 not actually push to the remote repository.}
 
@@ -52,7 +65,14 @@ or GitLab).
 
 \item \bold{force}: The input argument \code{force}.
 
+\item \bold{set_upstream}: The input argument \code{set_upstream}.
+
+\item \bold{view}: The input argument \code{view}.
+
 \item \bold{dry_run}: The input argument \code{dry_run}.
+
+\item \bold{protocol}: The authentication protocol for the remote repository
+(either \code{"https"} or \code{"ssh"}.
 
 }
 }
@@ -60,7 +80,7 @@ or GitLab).
 \code{wflow_git_push} pushes the local files on your machine to your remote
 repository on a remote Git hosting service (e.g. GitHub or GitLab). This is a
 convenience function to run Git commands from the R console instead of the
-Terminal. The same functionality can be acheived by running \code{git push}
+Terminal. The same functionality can be achieved by running \code{git push}
 in the Terminal.
 }
 \details{

@@ -4,8 +4,15 @@
 \alias{wflow_git_pull}
 \title{Pull files from remote repository}
 \usage{
-wflow_git_pull(remote = NULL, branch = NULL, username = NULL,
-  password = NULL, dry_run = FALSE, project = ".")
+wflow_git_pull(
+  remote = NULL,
+  branch = NULL,
+  username = NULL,
+  password = NULL,
+  fail = TRUE,
+  dry_run = FALSE,
+  project = "."
+)
 }
 \arguments{
 \item{remote}{character (default: NULL). The name of the remote repository.
@@ -20,6 +27,11 @@ service (e.g. GitHub or GitLab). The user is prompted if necessary.}
 
 \item{password}{character (default: NULL). Password for online Git hosting
 service (e.g. GitHub or GitLab). The user is prompted if necessary.}
+
+\item{fail}{logical (default: TRUE) Abort the pull if any merge conflicts
+are detected. If you are sure you want to manually cleanup the merge
+conflicts, set \code{fail = FALSE}. The argument \code{fail} is passed to
+the git2r function \code{\link[git2r]{merge.git_repository}}.}
 
 \item{dry_run}{logical (default: FALSE). Preview the proposed action but do
 not actually pull from the remote repository.}
@@ -44,7 +56,14 @@ or GitLab).
 \item \bold{merge_result}: The \code{git_merge_result} object returned by
 \link{git2r} (only included if \code{dry_run == FALSE}).
 
+\item \bold{fail}: The input argument \code{fail}.
+
 \item \bold{dry_run}: The input argument \code{dry_run}.
+
+\item \bold{protocol}: The authentication protocol for the remote repository
+(either \code{"https"} or \code{"ssh"}.
+
+\item \bold{project}: The input argument \code{project}.
 
 }
 }
@@ -52,7 +71,7 @@ or GitLab).
 \code{wflow_git_pull} pulls the remote files from your remote repository
 online (e.g. GitHub or GitLab) into your repository on your local machine.
 This is a convenience function to run Git commands from the R console instead
-of the Terminal. The same functionality can be acheived by running \code{git
+of the Terminal. The same functionality can be achieved by running \code{git
 pull} in the Terminal.
 }
 \details{

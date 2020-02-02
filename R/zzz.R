@@ -6,6 +6,54 @@
                  utils::packageVersion("workflowr")),
          "Run ?workflowr for help getting started")
   packageStartupMessage(paste(m, collapse = "\n"))
+  check_deps()
+}
+
+.onLoad <- function(libname, pkgname) {
+  sysgit <- Sys.which("git")
+  wflow_pkg_opts <- list(
+    workflowr.autosave = TRUE,
+    workflowr.sysgit = if(fs::file_exists(sysgit)) sysgit else "",
+    workflowr.view = interactive()
+  )
+
+  op <- options()
+  toset <- !(names(wflow_pkg_opts) %in% names(op))
+  if(any(toset)) options(wflow_pkg_opts[toset])
+
+  invisible()
+}
+
+# Check minimum required versions of dependencies b/c install.packages() doesn't
+check_deps <- function() {
+  deps <- c(
+    fs = "1.2.7",
+    git2r = "0.26.0",
+    httpuv = "1.2.2",
+    knitr = "1.18",
+    rmarkdown = "1.7",
+    rstudioapi = "0.6",
+    stringr = "1.3.0",
+    whisker = "0.3-2"
+  )
+  deps <- as.package_version(deps)
+
+  invalid <- logical(length = length(deps))
+  names(invalid) <- names(deps)
+  for (i in seq_along(deps)) {
+    pkgname <- names(deps[i])
+    required <- deps[i]
+    installed <- utils::packageVersion(pkgname)
+
+    if (installed < required) {
+      warning(call. = FALSE, glue::glue(
+        "Please update package \"{pkgname}\": version {installed} is installed, but {required} is required"
+      ))
+      invalid[i] <- TRUE
+    }
+  }
+
+  return(invisible(invalid))
 }
 
 #' workflowr: A workflow template for creating a research website
@@ -48,8 +96,42 @@
 #'   project-wide rendering settings can be customized in the
 #'   \code{_site.yml} file.}
 #' }
-#' 
+#'
+#' @section Package options:
+#'
+#' The following package options affect the default behavior of the workflowr
+#' functions. To permanently set any of these options, add a call to the
+#' function \code{\link[base]{options}} in the file \code{.Rprofile} at the root
+#' of your workflowr project. For example:
+#'
+#' \preformatted{
+#' # Do not use Git executable
+#' options(workflowr.sysgit = "")
+#' }
+#'
+#' \describe{
+#'
+#' \item{workflowr.autosave}{A logical indicating whether workflowr functions
+#' should automatically save files open in the RStudio editor before running.
+#' The default is \code{TRUE}. This requires RStudio 1.1.287 or later. Only
+#' files that have been previously saved are affected. In other words, unnamed
+#' files will be ignored.}
+#'
+#' \item{workflowr.sysgit}{The path to the system Git executable. This is
+#' occasionally used to increase the speed of Git operations performed by
+#' workflowr. By default it is set to the first Git executable on the search
+#' path. You can specify a path to a different Git executable. Alternatively you
+#' can disable this behavior entirely by setting it to the empty string \code{""}.}
+#'
+#' \item{workflowr.view}{A logical indicating whether workflowr functions should
+#' open webpages for viewing in the browser. The default is set to
+#' \code{\link[base]{interactive}} (i.e. it is \code{TRUE} only if it is an
+#' interactive R session). This option is currently used by
+#' \code{\link{wflow_build}}, \code{\link{wflow_git_push}}, and
+#' \code{\link{wflow_publish}}.}
+#' }
+#'
 #' @docType package
 #' @name workflowr
-#' 
+#'
 NULL

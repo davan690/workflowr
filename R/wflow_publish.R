@@ -13,6 +13,7 @@
 #'   built (step 2) and their output HTML and figures will be subsequently
 #'   committed (step 3). Supports file
 #'   \href{https://en.wikipedia.org/wiki/Glob_(programming)}{globbing}.
+#'   The files are always built in the order they are listed.
 #' @inheritParams wflow_git_commit
 #' @inheritParams wflow_build
 #'
@@ -69,7 +70,7 @@ wflow_publish <- function(
   # args to wflow_build
   update = FALSE,
   republish = FALSE,
-  view = interactive(),
+  view = getOption("workflowr.view"),
   delete_cache = FALSE,
   seed = 12345,
   verbose = FALSE,
@@ -84,15 +85,8 @@ wflow_publish <- function(
 
   # Check input arguments ------------------------------------------------------
 
-  if (!is.null(files)) {
-    if (!(is.character(files) && length(files) > 0))
-      stop("files must be NULL or a character vector of filenames")
-    files <- glob(files)
-    if (!all(fs::file_exists(files)))
-      stop("Not all files exist. Check the paths to the files")
-    # Change filepaths to relative paths
-    files <- relative(files)
-  }
+  files <- process_input_files(files, allow_null = TRUE, files_only = FALSE,
+                               convert_to_relative_paths = TRUE)
 
   if (is.null(message)) {
     message <- deparse(sys.call())
@@ -103,41 +97,24 @@ wflow_publish <- function(
     stop("message must be NULL or a character vector")
   }
 
-  if (!(is.logical(all) && length(all) == 1))
-    stop("all must be a one-element logical vector")
 
-  if (!(is.logical(force) && length(force) == 1))
-    stop("force must be a one-element logical vector")
-
-  if (!(is.logical(update) && length(update) == 1))
-    stop("update must be a one-element logical vector")
-
-  if (!(is.logical(republish) && length(republish) == 1))
-    stop("republish must be a one-element logical vector")
-
-  if (!(is.logical(view) && length(view) == 1))
-    stop("view must be a one-element logical vector")
-
-  if (!(is.logical(delete_cache) && length(delete_cache) == 1))
-    stop("delete_cache must be a one-element logical vector")
+  assert_is_flag(all)
+  assert_is_flag(force)
+  assert_is_flag(update)
+  assert_is_flag(republish)
+  assert_is_flag(view)
+  assert_is_flag(delete_cache)
 
   if (!(is.numeric(seed) && length(seed) == 1))
     stop("seed must be a one element numeric vector")
 
-  if (!(is.logical(verbose) && length(verbose) == 1))
-    stop("verbose must be a one-element logical vector")
-
-  if (!(is.logical(dry_run) && length(dry_run) == 1))
-    stop("dry_run must be a one-element logical vector")
-
-  if (!(is.character(project) && length(project) == 1))
-    stop("project must be a one-element character vector")
-
-  if (!fs::dir_exists(project)) {
-    stop("project directory does not exist.")
-  }
-
+  assert_is_flag(verbose)
+  assert_is_flag(dry_run)
+  check_wd_exists()
+  assert_is_single_directory(project)
   project <- absolute(project)
+
+  if (isTRUE(getOption("workflowr.autosave"))) autosave()
 
   # Assess project status ------------------------------------------------------
 
@@ -168,9 +145,9 @@ wflow_publish <- function(
     any(!(files %in% rownames(s0$status)))
 
   if (scenario1 || scenario2 || scenario3) {
-    step1 <- wflow_git_commit(files = files, message = message,
-                          all = all, force = force,
-                          dry_run = dry_run, project = project)
+    step1 <- wflow_git_commit_(files = files, message = message,
+                               all = all, force = force,
+                               dry_run = dry_run, project = project)
     # If subsequent steps fail, undo this action by resetting the Git repo to
     # its initial state.
     on.exit(git2r::reset(commit_current, reset_type = "mixed"), add = TRUE)
@@ -222,16 +199,15 @@ wflow_publish <- function(
                         recursive = TRUE, copy.date = TRUE), add = TRUE)
     }
 
-    step2 <- wflow_build(files = files_to_build, make = FALSE,
-                         update = update, republish = republish,
-                         view = view, clean_fig_files = TRUE,
-                         delete_cache = delete_cache, seed = seed,
-                         local = FALSE, verbose = verbose,
-                         dry_run = dry_run, project = project)
-    s2 <- wflow_status(project = project)
+    step2 <- wflow_build_(files = files_to_build, make = FALSE,
+                          update = update, republish = republish,
+                          view = view, clean_fig_files = TRUE,
+                          delete_cache = delete_cache, seed = seed,
+                          local = FALSE, verbose = verbose,
+                          log_dir = use_default_log_dir(),
+                          dry_run = dry_run, project = project)
   } else {
     step2 <- NULL
-    s2 <- s1
   }
 
   # Step 3 : Commit HTML files -------------------------------------------------
@@ -242,11 +218,11 @@ wflow_publish <- function(
     # Have to loop on step2$built as an underlying git2r function requires a
     # length 1 character vector
     figs_path <- vapply(step2$built, create_figure_path, character(1))
-    dir_figure <- file.path(s2$docs, figs_path)
-    site_libs <- file.path(s2$docs, "site_libs")
-    docs_nojekyll <- file.path(s2$docs, ".nojekyll")
-    docs_css <- list.files(path = s2$docs, pattern = "css$", full.names = TRUE)
-    docs_js <- list.files(path = s2$docs, pattern = "js$", full.names = TRUE)
+    dir_figure <- file.path(s0$docs, figs_path)
+    site_libs <- file.path(s0$docs, "site_libs")
+    docs_nojekyll <- file.path(s0$docs, ".nojekyll")
+    docs_css <- list.files(path = s0$docs, pattern = "css$", full.names = TRUE)
+    docs_js <- list.files(path = s0$docs, pattern = "js$", full.names = TRUE)
     files_to_commit <- c(step2$html, dir_figure, site_libs, docs_nojekyll,
                          docs_css, docs_js)
 
